@@ -1,6 +1,8 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Project Cheyam</title>
 <style>
     body {
@@ -67,6 +69,22 @@
     @keyframes blobMove3 {
         0% { transform: translate(0, 0) scale(1); }
         100% { transform: translate(20px, 30px) scale(1.05); }
+    }
+
+    /* Floating particles */
+    .particle {
+        position: fixed;
+        width: 6px;
+        height: 6px;
+        background: #0ff;
+        border-radius: 50%;
+        opacity: 0.3;
+        animation: floatParticle 10s linear infinite;
+        pointer-events: none;
+    }
+    @keyframes floatParticle {
+        0% { transform: translateY(0); }
+        100% { transform: translateY(-100vh); }
     }
 
     /* Overlay lock */
@@ -247,11 +265,14 @@
     <div class="blob blob3"></div>
 </div>
 
-<div id="overlay" role="dialog" aria-modal="true" aria-label="Project Cheyam splash screen">Project Cheyam<br><small style="font-size:0.4em; margin-top: 10px; display:block;">Click anywhere to start</small></div>
+<div id="overlay" role="dialog" aria-modal="true" aria-label="Project Cheyam splash screen">
+  Project Cheyam<br>
+  <small style="font-size:0.4em; margin-top: 10px; display:block;">Click anywhere to start</small>
+</div>
 
 <div id="container" aria-live="polite">
     <h1>Do you want to continue?</h1>
-    <button id="yesBtn" class="disabled" aria-label="Click yes button">YES</button>
+    <button id="yesBtn" class="disabled" aria-label="Click yes button" aria-pressed="false">YES</button>
     <button id="noBtn" class="disabled" aria-label="Click no button">NO</button>
     <div id="counter" aria-atomic="true">YES Count: 0</div>
 </div>
@@ -273,7 +294,8 @@ for (let i = 0; i < 40; i++) {
     let p = document.createElement("div");
     p.className = "particle";
     p.style.left = Math.random() * 100 + "vw";
-    p.style.animationDelay = Math.random() * 5 + "s";
+    p.style.top = Math.random() * 100 + "vh";
+    p.style.animationDelay = Math.random() * 10 + "s";
     p.style.opacity = Math.random() * 0.6 + 0.2;
     document.body.appendChild(p);
 }
@@ -281,9 +303,9 @@ for (let i = 0; i < 40; i++) {
 // Overlay click to hide and enable buttons
 overlay.addEventListener("click", () => {
     overlay.classList.add("hidden");
-    // Enable buttons
     yesBtn.classList.remove("disabled");
     noBtn.classList.remove("disabled");
+    yesBtn.focus();
 });
 
 // YES button click
@@ -292,11 +314,14 @@ yesBtn.onclick = () => {
     if (yesCount < 100) {
         yesCount++;
         counter.innerText = "YES Count: " + yesCount;
+        yesBtn.setAttribute("aria-pressed", "true");
     }
     if (yesCount === 100) {
         alert("You are free now!");
         window.onbeforeunload = null;
         overlay.style.display = "none";
+        yesBtn.disabled = true;
+        noBtn.disabled = true;
     }
 };
 
@@ -316,6 +341,7 @@ function moveNoButton() {
 }
 
 noBtn.onmouseover = moveNoButton;
+noBtn.ontouchstart = moveNoButton; // For touch devices
 
 noBtn.onclick = (e) => {
     if (noBtn.classList.contains("disabled")) return;
