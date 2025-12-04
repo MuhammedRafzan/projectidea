@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Project Cheyam</title>
+<style>
+    body {
+        margin: 0;
+        font-family: "Poppins", sans-serif;
+        background: #111;
+        overflow: hidden;
+    }
+
+    #overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,0.85);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        flex-direction: column;
+        color: #fff;
+        text-align: center;
+        z-index: 9999;
+        animation: fadeIn 1s ease-in-out;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+
+    #message {
+        font-size: 34px;
+        font-weight: 700;
+        margin-bottom: 20px;
+        text-shadow: 0 0 20px #0f0;
+        animation: glow 2s infinite alternate;
+    }
+
+    @keyframes glow {
+        from { text-shadow: 0 0 10px #0f0; }
+        to { text-shadow: 0 0 25px #0f0; }
+    }
+
+    #counterText {
+        font-size: 22px;
+        margin-bottom: 30px;
+        opacity: 0.7;
+    }
+
+    .btn {
+        padding: 14px 35px;
+        margin: 10px;
+        border: none;
+        font-size: 22px;
+        border-radius: 12px;
+        cursor: pointer;
+        font-weight: 600;
+        transition: 0.2s ease;
+        user-select: none;
+    }
+
+    #yesBtn {
+        background: #00ff88;
+        color: #000;
+        box-shadow: 0 0 20px #00ff88;
+    }
+    #yesBtn:hover {
+        transform: scale(1.1);
+        box-shadow: 0 0 35px #00ff88;
+    }
+
+    #noBtn {
+        background: #ff0044;
+        color: #fff;
+        position: absolute;
+        box-shadow: 0 0 20px #ff0044;
+    }
+</style>
+</head>
+
+<body>
+
+<div id="overlay">
+    <p id="message">Project cheyam?</p>
+    <p id="counterText">Yes Count: 0</p>
+    <button class="btn" id="yesBtn">Yes</button>
+    <button class="btn" id="noBtn">No</button>
+</div>
+
+<script>
+    let yesCount = 0;
+    let goal = 100;
+
+    // Request fullscreen automatically
+    document.addEventListener("click", () => {
+        if (!document.fullscreenElement) {
+            document.documentElement.requestFullscreen().catch(() => {});
+        }
+    });
+
+    // Yes button logic
+    document.getElementById("yesBtn").onclick = function () {
+        yesCount++;
+        document.getElementById("counterText").textContent =
+            "Yes Count: " + yesCount + " / " + goal;
+
+        if (yesCount >= goal) {
+            document.getElementById("overlay").style.display = "none";
+            alert("Okay! Project Cheyam! 🎉");
+        }
+    };
+
+    // Funny movement for NO button
+    const noBtn = document.getElementById("noBtn");
+    noBtn.addEventListener("mouseover", runAway);
+
+    function runAway() {
+        // Increase goal when NO is touched
+        goal++;
+
+        // Random new position inside window
+        const x = Math.random() * (window.innerWidth - 150);
+        const y = Math.random() * (window.innerHeight - 150);
+
+        noBtn.style.left = x + "px";
+        noBtn.style.top = y + "px";
+
+        // Update message
+        document.getElementById("message").textContent =
+            "No pressed! Now goal = " + goal + " 😈";
+    }
+
+    // Block back navigation
+    history.pushState(null, "", location.href);
+    window.onpopstate = function () {
+        history.pushState(null, "", location.href);
+    };
+
+    // Stop closing until completed
+    window.onbeforeunload = function () {
+        return "Finish clicking YES!";
+    };
+</script>
+
+</body>
+</html>
