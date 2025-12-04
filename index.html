@@ -23,17 +23,13 @@
         padding-top: 40px;
     }
 
-    @keyframes fadeIn {
-        from { opacity: 0; }
-        to { opacity: 1; }
-    }
+    @keyframes fadeIn { from{opacity:0} to{opacity:1} }
 
     #counterText {
         font-size: 24px;
         font-weight: 600;
         margin-bottom: 20px;
         text-shadow: 0 0 10px #0f0;
-        pointer-events: none;
     }
 
     #message {
@@ -45,7 +41,7 @@
 
     @keyframes glow {
         from { text-shadow: 0 0 10px #0f0; }
-        to { text-shadow: 0 0 25px #0f0; }
+        to   { text-shadow: 0 0 25px #0f0; }
     }
 
     #btnArea {
@@ -62,19 +58,16 @@
         border-radius: 15px;
         cursor: pointer;
         font-weight: 600;
-        transition: 0.2s ease;
-        user-select: none;
     }
 
     #yesBtn {
         background: #00ff88;
         color: #000;
         box-shadow: 0 0 20px #00ff88;
+        transition: transform .2s;
     }
 
-    #yesBtn:active {
-        transform: scale(1.25);
-    }
+    #yesBtn:active { transform: scale(1.25); }
 
     #noBtn {
         background: #ff0044;
@@ -83,7 +76,7 @@
         left: 50%;
         top: 50%;
         box-shadow: 0 0 20px #ff0044;
-        transition: transform 0.2s ease;
+        transition: transform .2s;
     }
 
     @keyframes shakeScreen {
@@ -110,6 +103,7 @@
 </div>
 
 <script>
+
     let yesCount = 0;
     let noCount = 0;
     let goal = 100;
@@ -122,57 +116,63 @@
         counterText.textContent = `Yes: ${yesCount} | No: ${noCount} | Goal: ${goal}`;
     }
 
-    // ----- STRONG EXIT BLOCKER -----
+    // ---------------- EXIT / QUIT BLOCKER ---------------------
 
-    function exitBlocker(event) {
+    function blockExit(event) {
         if (yesCount < goal) {
             event.preventDefault();
-            event.returnValue = "You must reach 100 YES clicks before exiting!";
-            return "You must reach 100 YES clicks before exiting!";
+            event.returnValue = "❗You must finish 100 YES clicks before quitting!";
+            return "❗You must finish 100 YES clicks before quitting!";
         }
     }
 
-    window.addEventListener("beforeunload", exitBlocker);
-    window.onbeforeunload = exitBlocker;
+    // Block tab close / browser quit / reload
+    window.onbeforeunload = blockExit;
+    window.addEventListener("beforeunload", blockExit);
 
+    // Block BACK button
     history.pushState(null, "", location.href);
     window.onpopstate = () => {
         if (yesCount < goal) {
-            alert("⚠️ Not allowed to exit! Finish clicking YES!");
+            alert("🚫 You cannot exit until 100 YES clicks!");
             history.pushState(null, "", location.href);
         }
     };
 
+    // Block switching apps / minimizing / hiding tab
     document.addEventListener("visibilitychange", () => {
         if (document.hidden && yesCount < goal) {
-            alert("🚫 You cannot exit until YES count reaches 100!");
-            document.location.reload();
+            alert("🚫 You cannot exit until you finish 100 YES!");
+            location.reload();
         }
     });
 
-    // ----- FULLSCREEN -----
+    // Remove all restrictions after goal
+    function unlockExit() {
+        window.onbeforeunload = null;
+        window.removeEventListener("beforeunload", blockExit);
+    }
+
+    // ---------------- FULLSCREEN -------------------------
     document.addEventListener("click", () => {
         if (!document.fullscreenElement) {
             document.documentElement.requestFullscreen().catch(() => {});
         }
     });
 
-    // -------- YES BUTTON ----------
+    // ---------------- YES BUTTON --------------------------
     document.getElementById("yesBtn").onclick = function () {
         yesCount++;
         updateDisplay();
 
         if (yesCount >= goal) {
-            // Remove exit block
-            window.removeEventListener("beforeunload", exitBlocker);
-            window.onbeforeunload = null;
-
+            unlockExit();  // Remove quit restrictions
             document.getElementById("overlay").style.display = "none";
             alert("Okay! Project Cheyam! 🎉");
         }
     };
 
-    // -------- NO BUTTON ----------
+    // ---------------- NO BUTTON ----------------------------
     noBtn.onclick = function () {
         noCount++;
         goal++;
@@ -191,13 +191,14 @@
     };
 
     function moveNoButton() {
-        const areaRect = btnArea.getBoundingClientRect();
-        const x = Math.random() * (areaRect.width - 150);
-        const y = Math.random() * (areaRect.height - 80);
+        const rect = btnArea.getBoundingClientRect();
+        const x = Math.random() * (rect.width - 150);
+        const y = Math.random() * (rect.height - 80);
 
         noBtn.style.left = x + "px";
         noBtn.style.top = y + "px";
     }
+
 </script>
 
 </body>
