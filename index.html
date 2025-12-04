@@ -3,41 +3,76 @@
 <head>
 <title>Project Cheyam</title>
 <style>
+    /* Reset and base */
     body {
         margin: 0;
         font-family: "Poppins", sans-serif;
         overflow: hidden;
-        background: black;
+        background: #000;
+        position: relative;
+        min-height: 100vh;
+        color: white;
     }
 
-    /* 🔥 Animated Background */
-    body::before {
-        content: "";
+    /* Background blobs container */
+    .background-blobs {
         position: fixed;
         inset: 0;
-        background: radial-gradient(circle, #222, #000);
-        animation: pulse 5s infinite alternate ease-in-out;
-        z-index: -2;
+        overflow: hidden;
+        z-index: -3;
     }
 
-    @keyframes pulse {
-        0% { transform: scale(1); filter: brightness(1); }
-        100% { transform: scale(1.2); filter: brightness(0.7); }
-    }
-
-    /* Floating particles */
-    .particle {
+    /* Each blob */
+    .blob {
         position: absolute;
-        width: 6px;
-        height: 6px;
-        background: white;
-        opacity: 0.6;
         border-radius: 50%;
-        animation: floatUp 8s linear infinite;
+        filter: blur(100px);
+        opacity: 0.6;
+        mix-blend-mode: screen;
+        animation-timing-function: ease-in-out;
+        animation-iteration-count: infinite;
     }
-    @keyframes floatUp {
-        from { transform: translateY(100vh); }
-        to { transform: translateY(-10vh); }
+
+    /* Different sized blobs with animations */
+    .blob1 {
+        width: 300px;
+        height: 300px;
+        background: #00ffcc;
+        top: 20%;
+        left: 10%;
+        animation: blobMove1 15s infinite alternate;
+        animation-timing-function: ease-in-out;
+    }
+    .blob2 {
+        width: 400px;
+        height: 400px;
+        background: #ff0080;
+        top: 50%;
+        left: 70%;
+        animation: blobMove2 18s infinite alternate;
+        animation-timing-function: ease-in-out;
+    }
+    .blob3 {
+        width: 350px;
+        height: 350px;
+        background: #00ffff;
+        top: 70%;
+        left: 40%;
+        animation: blobMove3 20s infinite alternate;
+        animation-timing-function: ease-in-out;
+    }
+
+    @keyframes blobMove1 {
+        0% { transform: translate(0, 0) scale(1); }
+        100% { transform: translate(30px, -20px) scale(1.1); }
+    }
+    @keyframes blobMove2 {
+        0% { transform: translate(0, 0) scale(1); }
+        100% { transform: translate(-40px, 40px) scale(1.15); }
+    }
+    @keyframes blobMove3 {
+        0% { transform: translate(0, 0) scale(1); }
+        100% { transform: translate(20px, 30px) scale(1.05); }
     }
 
     /* Overlay lock */
@@ -61,30 +96,57 @@
         margin-top: 80px;
         position: relative;
         z-index: 1;
+        padding: 0 10px;
+        max-width: 400px;
+        margin-left: auto;
+        margin-right: auto;
     }
 
-    /* YES BUTTON animation */
+    h1 {
+        font-size: 1.8rem;
+        margin-bottom: 30px;
+    }
+
+    /* YES BUTTON funny bounce + color shifting */
     #yesBtn {
-        padding: 15px 35px;
-        font-size: 22px;
+        padding: 14px 30px;
+        font-size: 20px;
         margin: 20px;
         border: none;
         color: white;
         background: #00c853;
         border-radius: 15px;
         cursor: pointer;
-        animation: yesPulse 0.8s infinite alternate;
         user-select: none;
+        animation: yesBounceHue 2s infinite ease-in-out;
+        box-shadow: 0 0 10px #00ff6a;
+        transition: box-shadow 0.3s ease;
+        display: inline-block;
+        min-width: 100px;
     }
-    @keyframes yesPulse {
-        from { transform: scale(1); box-shadow: 0 0 10px #00ff6a; }
-        to { transform: scale(1.15); box-shadow: 0 0 20px #00ffcc; }
+
+    @keyframes yesBounceHue {
+        0% {
+            transform: translateY(0) scale(1);
+            filter: hue-rotate(0deg);
+            box-shadow: 0 0 10px #00ff6a;
+        }
+        50% {
+            transform: translateY(-12px) scale(1.1);
+            filter: hue-rotate(90deg);
+            box-shadow: 0 0 25px #00ffa0;
+        }
+        100% {
+            transform: translateY(0) scale(1);
+            filter: hue-rotate(0deg);
+            box-shadow: 0 0 10px #00ff6a;
+        }
     }
 
     /* NO BUTTON funny movement + explosion */
     #noBtn {
-        padding: 15px 35px;
-        font-size: 22px;
+        padding: 14px 30px;
+        font-size: 20px;
         border: none;
         color: white;
         background: #d50000;
@@ -96,6 +158,7 @@
         transform: translate(-50%, -50%);
         transition: 0.2s;
         user-select: none;
+        min-width: 100px;
     }
 
     /* Explosion particles */
@@ -115,7 +178,7 @@
     }
 
     #counter {
-        font-size: 28px;
+        font-size: 26px;
         margin-top: 20px;
         color: #00e5ff;
         user-select: none;
@@ -135,16 +198,46 @@
         animation: shake 0.1s infinite;
         user-select: none;
         z-index: 100;
+        padding: 10px;
+        text-align: center;
     }
     @keyframes shake {
         0%, 100% { transform: translateX(0); }
         50% { transform: translateX(-10px); }
     }
+
+    /* Responsive for phones */
+    @media (max-width: 480px) {
+        #yesBtn, #noBtn {
+            font-size: 18px;
+            padding: 12px 25px;
+            min-width: 80px;
+        }
+        #counter {
+            font-size: 22px;
+        }
+        h1 {
+            font-size: 1.4rem;
+        }
+        #overlay {
+            font-size: 36px;
+        }
+        #scarePopup {
+            font-size: 36px;
+        }
+    }
 </style>
 </head>
 <body>
 
-<div id="overlay">Project Cheyam</div>
+<!-- Background blobs -->
+<div class="background-blobs" aria-hidden="true">
+    <div class="blob blob1"></div>
+    <div class="blob blob2"></div>
+    <div class="blob blob3"></div>
+</div>
+
+<div id="overlay" aria-label="Project Cheyam splash screen">Project Cheyam</div>
 
 <div id="container" aria-live="polite">
     <h1>Do you want to continue?</h1>
@@ -165,7 +258,7 @@ const noBtn = document.getElementById("noBtn");
 const counter = document.getElementById("counter");
 const scarePopup = document.getElementById("scarePopup");
 
-// Create floating particles
+// Floating particles
 for (let i = 0; i < 40; i++) {
     let p = document.createElement("div");
     p.className = "particle";
@@ -175,8 +268,7 @@ for (let i = 0; i < 40; i++) {
     document.body.appendChild(p);
 }
 
-// Disable overlay hiding, user must click YES 100 times
-// Commenting this out because original spec wanted no quit until 100 YES clicks
+// Disable overlay hiding to force YES clicks
 // overlay.addEventListener("click", () => {
 //     overlay.style.display = "none";
 // });
@@ -212,17 +304,11 @@ noBtn.onmouseover = moveNoButton;
 noBtn.onclick = (e) => {
     noCount++;
 
-    // Explosion effect
     for (let i = 0; i < 8; i++) {
         let particle = document.createElement("div");
         particle.className = "explode";
         particle.style.left = (e.clientX - 4) + "px";
         particle.style.top = (e.clientY - 4) + "px";
-
-        // Random direction offset for each particle
-        particle.style.setProperty("--dx", (Math.random() - 0.5) * 100 + "px");
-        particle.style.setProperty("--dy", (Math.random() - 0.5) * 100 + "px");
-
         document.body.appendChild(particle);
         setTimeout(() => particle.remove(), 600);
     }
@@ -235,14 +321,12 @@ noBtn.onclick = (e) => {
     }
 };
 
-// Prevent closing / quitting until YES = 100
 window.onbeforeunload = function () {
     if (yesCount < 100) {
         return "You cannot exit until YES = 100.";
     }
 };
 
-// Disable right-click context menu and some keys
 document.addEventListener("contextmenu", e => e.preventDefault());
 document.addEventListener("keydown", e => {
     if (["Escape", "F5", "F11", "F12"].includes(e.key)) e.preventDefault();
