@@ -45,7 +45,7 @@
     #counterText {
         font-size: 22px;
         margin-bottom: 30px;
-        opacity: 0.7;
+        opacity: 0.8;
     }
 
     .btn {
@@ -65,6 +65,7 @@
         color: #000;
         box-shadow: 0 0 20px #00ff88;
     }
+
     #yesBtn:hover {
         transform: scale(1.1);
         box-shadow: 0 0 35px #00ff88;
@@ -83,27 +84,35 @@
 
 <div id="overlay">
     <p id="message">Project cheyam?</p>
-    <p id="counterText">Yes Count: 0</p>
+    <p id="counterText">Yes: 0 | No: 0 | Goal: 100</p>
+
     <button class="btn" id="yesBtn">Yes</button>
     <button class="btn" id="noBtn">No</button>
 </div>
 
 <script>
     let yesCount = 0;
+    let noCount = 0;
     let goal = 100;
 
-    // Request fullscreen automatically
+    const counterText = document.getElementById("counterText");
+
+    function updateDisplay() {
+        counterText.textContent =
+            `Yes: ${yesCount} | No: ${noCount} | Goal: ${goal}`;
+    }
+
+    // Auto fullscreen request
     document.addEventListener("click", () => {
         if (!document.fullscreenElement) {
             document.documentElement.requestFullscreen().catch(() => {});
         }
     });
 
-    // Yes button logic
+    // YES BUTTON
     document.getElementById("yesBtn").onclick = function () {
         yesCount++;
-        document.getElementById("counterText").textContent =
-            "Yes Count: " + yesCount + " / " + goal;
+        updateDisplay();
 
         if (yesCount >= goal) {
             document.getElementById("overlay").style.display = "none";
@@ -111,36 +120,34 @@
         }
     };
 
-    // Funny movement for NO button
+    // NO BUTTON movement + count increase
     const noBtn = document.getElementById("noBtn");
-    noBtn.addEventListener("mouseover", runAway);
 
-    function runAway() {
-        // Increase goal when NO is touched
-        goal++;
+    noBtn.onclick = function () {
+        noCount++;
+        goal++;  // Make it harder
+        updateDisplay();
 
-        // Random new position inside window
-        const x = Math.random() * (window.innerWidth - 150);
-        const y = Math.random() * (window.innerHeight - 150);
+        document.getElementById("message").textContent =
+            `No clicked! Goal increased to ${goal}! 😈`;
 
+        // Move to a random position
+        moveNoButton();
+    };
+
+    function moveNoButton() {
+        const x = Math.random() * (window.innerWidth - 160);
+        const y = Math.random() * (window.innerHeight - 160);
         noBtn.style.left = x + "px";
         noBtn.style.top = y + "px";
-
-        // Update message
-        document.getElementById("message").textContent =
-            "No pressed! Now goal = " + goal + " 😈";
     }
 
     // Block back navigation
     history.pushState(null, "", location.href);
-    window.onpopstate = function () {
-        history.pushState(null, "", location.href);
-    };
+    window.onpopstate = () => history.pushState(null, "", location.href);
 
-    // Stop closing until completed
-    window.onbeforeunload = function () {
-        return "Finish clicking YES!";
-    };
+    // Prevent closing
+    window.onbeforeunload = () => "Finish the challenge!";
 </script>
 
 </body>
