@@ -48,16 +48,19 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        flex-direction: column;
         color: white;
-        font-size: 40px;
-        text-align: center;
+        font-size: 50px;
+        font-weight: bold;
+        user-select: none;
+        z-index: 10;
     }
 
     #container {
         text-align: center;
         color: white;
         margin-top: 80px;
+        position: relative;
+        z-index: 1;
     }
 
     /* YES BUTTON animation */
@@ -71,6 +74,7 @@
         border-radius: 15px;
         cursor: pointer;
         animation: yesPulse 0.8s infinite alternate;
+        user-select: none;
     }
     @keyframes yesPulse {
         from { transform: scale(1); box-shadow: 0 0 10px #00ff6a; }
@@ -91,6 +95,7 @@
         left: 50%;
         transform: translate(-50%, -50%);
         transition: 0.2s;
+        user-select: none;
     }
 
     /* Explosion particles */
@@ -101,6 +106,8 @@
         background: yellow;
         border-radius: 50%;
         animation: boom 0.6s forwards;
+        pointer-events: none;
+        z-index: 20;
     }
     @keyframes boom {
         from { transform: scale(1); opacity: 1; }
@@ -111,13 +118,14 @@
         font-size: 28px;
         margin-top: 20px;
         color: #00e5ff;
+        user-select: none;
     }
 
     /* Scary popup */
     #scarePopup {
         position: fixed;
         inset: 0;
-        background: rgba(0, 0, 0, 0.9);
+        background: rgba(0, 0, 0, 0.95);
         display: none;
         justify-content: center;
         align-items: center;
@@ -125,6 +133,8 @@
         font-size: 60px;
         font-weight: bold;
         animation: shake 0.1s infinite;
+        user-select: none;
+        z-index: 100;
     }
     @keyframes shake {
         0%, 100% { transform: translateX(0); }
@@ -136,75 +146,103 @@
 
 <div id="overlay">Project Cheyam</div>
 
-<div id="container">
+<div id="container" aria-live="polite">
     <h1>Do you want to continue?</h1>
-    <button id="yesBtn">YES</button>
-    <button id="noBtn">NO</button>
-    <div id="counter">YES Count: 0</div>
+    <button id="yesBtn" aria-label="Click yes button">YES</button>
+    <button id="noBtn" aria-label="Click no button">NO</button>
+    <div id="counter" aria-atomic="true">YES Count: 0</div>
 </div>
 
-<div id="scarePopup">YOU CAN'T ESCAPE!</div>
+<div id="scarePopup" role="alert" aria-live="assertive">YOU CAN'T ESCAPE!</div>
 
 <script>
 let yesCount = 0;
 let noCount = 0;
 
-// 🔥 Animated particles
+const overlay = document.getElementById("overlay");
+const yesBtn = document.getElementById("yesBtn");
+const noBtn = document.getElementById("noBtn");
+const counter = document.getElementById("counter");
+const scarePopup = document.getElementById("scarePopup");
+
+// Create floating particles
 for (let i = 0; i < 40; i++) {
     let p = document.createElement("div");
     p.className = "particle";
     p.style.left = Math.random() * 100 + "vw";
     p.style.animationDelay = Math.random() * 5 + "s";
-    p.style.opacity = Math.random();
+    p.style.opacity = Math.random() * 0.6 + 0.2;
     document.body.appendChild(p);
 }
 
-document.getElementById("overlay").addEventListener("click", () => {
-    document.getElementById("overlay").style.display = "none";
-});
+// Disable overlay hiding, user must click YES 100 times
+// Commenting this out because original spec wanted no quit until 100 YES clicks
+// overlay.addEventListener("click", () => {
+//     overlay.style.display = "none";
+// });
 
-document.getElementById("yesBtn").onclick = () => {
-    yesCount++;
-    document.getElementById("counter").innerText = "YES Count: " + yesCount;
-
-    if (yesCount >= 100) {
+yesBtn.onclick = () => {
+    if (yesCount < 100) {
+        yesCount++;
+        counter.innerText = "YES Count: " + yesCount;
+    }
+    if (yesCount === 100) {
         alert("You are free now!");
         window.onbeforeunload = null;
+        overlay.style.display = "none";
     }
 };
 
-document.getElementById("noBtn").onmouseover = () => {
-    let btn = document.getElementById("noBtn");
-    btn.style.top = Math.random() * 80 + "vh";
-    btn.style.left = Math.random() * 80 + "vw";
-};
+// Adjust NO button position to stay fully on screen
+function moveNoButton() {
+    const btnWidth = noBtn.offsetWidth;
+    const btnHeight = noBtn.offsetHeight;
+    const maxX = window.innerWidth - btnWidth;
+    const maxY = window.innerHeight - btnHeight;
 
-document.getElementById("noBtn").onclick = (e) => {
+    let newX = Math.random() * maxX;
+    let newY = Math.random() * maxY;
+
+    noBtn.style.left = newX + "px";
+    noBtn.style.top = newY + "px";
+}
+
+noBtn.onmouseover = moveNoButton;
+
+noBtn.onclick = (e) => {
     noCount++;
 
-    // explosion effect
+    // Explosion effect
     for (let i = 0; i < 8; i++) {
         let particle = document.createElement("div");
         particle.className = "explode";
-        particle.style.left = (e.clientX - 10) + "px";
-        particle.style.top = (e.clientY - 10) + "px";
+        particle.style.left = (e.clientX - 4) + "px";
+        particle.style.top = (e.clientY - 4) + "px";
+
+        // Random direction offset for each particle
+        particle.style.setProperty("--dx", (Math.random() - 0.5) * 100 + "px");
+        particle.style.setProperty("--dy", (Math.random() - 0.5) * 100 + "px");
+
         document.body.appendChild(particle);
         setTimeout(() => particle.remove(), 600);
     }
 
     if (noCount === 50) {
-        document.getElementById("scarePopup").style.display = "flex";
+        scarePopup.style.display = "flex";
         setTimeout(() => {
-            document.getElementById("scarePopup").style.display = "none";
+            scarePopup.style.display = "none";
         }, 2000);
     }
 };
 
-// 🔒 Prevent closing / quitting
+// Prevent closing / quitting until YES = 100
 window.onbeforeunload = function () {
-    return "You cannot exit until YES = 100.";
+    if (yesCount < 100) {
+        return "You cannot exit until YES = 100.";
+    }
 };
 
+// Disable right-click context menu and some keys
 document.addEventListener("contextmenu", e => e.preventDefault());
 document.addEventListener("keydown", e => {
     if (["Escape", "F5", "F11", "F12"].includes(e.key)) e.preventDefault();
