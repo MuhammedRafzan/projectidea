@@ -77,6 +77,7 @@
         top: 50%;
         box-shadow: 0 0 20px #ff0044;
         transition: transform .2s;
+        z-index: 20;
     }
 
     @keyframes shakeScreen {
@@ -86,10 +87,51 @@
         75% { transform: translate(8px, 8px); }
         100% { transform: translate(0, 0); }
     }
+
+    /* EXPLOSION PARTICLES */
+    .particle {
+        position: absolute;
+        width: 10px;
+        height: 10px;
+        background: #ff0044;
+        border-radius: 50%;
+        animation: explode 0.6s ease-out forwards;
+    }
+
+    @keyframes explode {
+        from { opacity: 1; transform: scale(1); }
+        to   { opacity: 0; transform: translate(var(--x), var(--y)) scale(0.2); }
+    }
+
+    /* SCARY POPUP */
+    #scarePopup {
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,0.95);
+        display: none;
+        justify-content: center;
+        align-items: center;
+        z-index: 999999;
+    }
+
+    #scarePopup img {
+        width: 60%;
+        animation: scaryFlash 0.2s ease-in-out;
+    }
+
+    @keyframes scaryFlash {
+        from { transform: scale(0.4); opacity: 0; }
+        to { transform: scale(1); opacity: 1; }
+    }
 </style>
 </head>
 
 <body>
+
+<!-- Background Music -->
+<audio id="bgm" loop>
+    <source src="https://www.fesliyanstudios.com/play-mp3/387" type="audio/mpeg">
+</audio>
 
 <div id="overlay">
     <p id="counterText">Yes: 0 | No: 0 | Goal: 100</p>
@@ -102,6 +144,11 @@
     </div>
 </div>
 
+<!-- Scary Popup -->
+<div id="scarePopup">
+    <img src="https://i.imgur.com/8R2ZP1K.png">
+</div>
+
 <script>
 
     let yesCount = 0;
@@ -112,52 +159,50 @@
     const noBtn = document.getElementById("noBtn");
     const btnArea = document.getElementById("btnArea");
 
+    const bgm = document.getElementById("bgm");
+
     function updateDisplay() {
         counterText.textContent = `Yes: ${yesCount} | No: ${noCount} | Goal: ${goal}`;
     }
 
-    // ---------------- EXIT / QUIT BLOCKER ---------------------
-
+    // ---------------- EXIT BLOCKER ---------------------
     function blockExit(event) {
         if (yesCount < goal) {
             event.preventDefault();
-            event.returnValue = "❗You must finish 100 YES clicks before quitting!";
-            return "❗You must finish 100 YES clicks before quitting!";
+            event.returnValue = "❗Finish 100 YES clicks!";
+            return "❗Finish 100 YES clicks!";
         }
     }
 
-    // Block tab close / browser quit / reload
     window.onbeforeunload = blockExit;
     window.addEventListener("beforeunload", blockExit);
 
-    // Block BACK button
     history.pushState(null, "", location.href);
     window.onpopstate = () => {
         if (yesCount < goal) {
-            alert("🚫 You cannot exit until 100 YES clicks!");
+            alert("🚫 No exit! Click 100 YES first!");
             history.pushState(null, "", location.href);
         }
     };
 
-    // Block switching apps / minimizing / hiding tab
     document.addEventListener("visibilitychange", () => {
         if (document.hidden && yesCount < goal) {
-            alert("🚫 You cannot exit until you finish 100 YES!");
+            alert("🚫 No hiding! Finish 100 YES!");
             location.reload();
         }
     });
 
-    // Remove all restrictions after goal
     function unlockExit() {
         window.onbeforeunload = null;
         window.removeEventListener("beforeunload", blockExit);
     }
 
-    // ---------------- FULLSCREEN -------------------------
+    // ---------------- FULLSCREEN + MUSIC -------------------------
     document.addEventListener("click", () => {
         if (!document.fullscreenElement) {
             document.documentElement.requestFullscreen().catch(() => {});
         }
+        bgm.play().catch(()=>{});
     });
 
     // ---------------- YES BUTTON --------------------------
@@ -166,7 +211,7 @@
         updateDisplay();
 
         if (yesCount >= goal) {
-            unlockExit();  // Remove quit restrictions
+            unlockExit();
             document.getElementById("overlay").style.display = "none";
             alert("Okay! Project Cheyam! 🎉");
         }
@@ -178,11 +223,11 @@
         goal++;
         updateDisplay();
 
+        explodeButton(noBtn);
+        scaryPopup();
+
         document.getElementById("message").textContent =
             `No clicked! Goal → ${goal} 😈`;
-
-        noBtn.style.transform = "scale(1.3) rotate(25deg)";
-        setTimeout(() => noBtn.style.transform = "scale(1) rotate(0deg)", 150);
 
         document.body.style.animation = "shakeScreen 0.4s";
         setTimeout(() => document.body.style.animation = "", 400);
@@ -190,6 +235,7 @@
         moveNoButton();
     };
 
+    // ---------------- MOVE NO BUTTON -------------------------
     function moveNoButton() {
         const rect = btnArea.getBoundingClientRect();
         const x = Math.random() * (rect.width - 150);
@@ -197,6 +243,41 @@
 
         noBtn.style.left = x + "px";
         noBtn.style.top = y + "px";
+    }
+
+    // ---------------- EXPLODING BUTTON -------------------------
+    function explodeButton(btn) {
+        const rect = btn.getBoundingClientRect();
+        for (let i = 0; i < 20; i++) {
+            let p = document.createElement("div");
+            p.classList.add("particle");
+
+            let angle = Math.random() * Math.PI * 2;
+            let distance = Math.random() * 120 + 30;
+
+            p.style.setProperty("--x", `${Math.cos(angle) * distance}px`);
+            p.style.setProperty("--y", `${Math.sin(angle) * distance}px`);
+
+            p.style.left = rect.left + rect.width / 2 + "px";
+            p.style.top = rect.top + rect.height / 2 + "px";
+
+            document.body.appendChild(p);
+
+            setTimeout(() => p.remove(), 600);
+        }
+    }
+
+    // ---------------- SCARY POPUP -------------------------
+    function scaryPopup() {
+        const chance = Math.random();
+        if (chance < 0.35) {   // 35% chance
+            const popup = document.getElementById("scarePopup");
+            popup.style.display = "flex";
+
+            setTimeout(() => {
+                popup.style.display = "none";
+            }, 800);
+        }
     }
 
 </script>
