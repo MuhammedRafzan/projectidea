@@ -3,7 +3,6 @@
 <head>
 <title>Project Cheyam</title>
 <style>
-    /* Reset and base */
     body {
         margin: 0;
         font-family: "Poppins", sans-serif;
@@ -14,7 +13,7 @@
         color: white;
     }
 
-    /* Background blobs container */
+    /* Background blobs */
     .background-blobs {
         position: fixed;
         inset: 0;
@@ -22,7 +21,6 @@
         z-index: -3;
     }
 
-    /* Each blob */
     .blob {
         position: absolute;
         border-radius: 50%;
@@ -33,7 +31,6 @@
         animation-iteration-count: infinite;
     }
 
-    /* Different sized blobs with animations */
     .blob1 {
         width: 300px;
         height: 300px;
@@ -41,7 +38,6 @@
         top: 20%;
         left: 10%;
         animation: blobMove1 15s infinite alternate;
-        animation-timing-function: ease-in-out;
     }
     .blob2 {
         width: 400px;
@@ -50,7 +46,6 @@
         top: 50%;
         left: 70%;
         animation: blobMove2 18s infinite alternate;
-        animation-timing-function: ease-in-out;
     }
     .blob3 {
         width: 350px;
@@ -59,7 +54,6 @@
         top: 70%;
         left: 40%;
         animation: blobMove3 20s infinite alternate;
-        animation-timing-function: ease-in-out;
     }
 
     @keyframes blobMove1 {
@@ -79,7 +73,7 @@
     #overlay {
         position: fixed;
         inset: 0;
-        background: rgba(0, 0, 0, 0.6);
+        background: rgba(0, 0, 0, 0.8);
         display: flex;
         align-items: center;
         justify-content: center;
@@ -88,6 +82,12 @@
         font-weight: bold;
         user-select: none;
         z-index: 10;
+        cursor: pointer;
+        transition: opacity 0.5s ease;
+    }
+    #overlay.hidden {
+        opacity: 0;
+        pointer-events: none;
     }
 
     #container {
@@ -100,6 +100,7 @@
         max-width: 400px;
         margin-left: auto;
         margin-right: auto;
+        user-select: none;
     }
 
     h1 {
@@ -107,7 +108,7 @@
         margin-bottom: 30px;
     }
 
-    /* YES BUTTON funny bounce + color shifting */
+    /* YES BUTTON bounce + color shifting */
     #yesBtn {
         padding: 14px 30px;
         font-size: 20px;
@@ -117,12 +118,21 @@
         background: #00c853;
         border-radius: 15px;
         cursor: pointer;
-        user-select: none;
         animation: yesBounceHue 2s infinite ease-in-out;
         box-shadow: 0 0 10px #00ff6a;
         transition: box-shadow 0.3s ease;
         display: inline-block;
         min-width: 100px;
+        user-select: none;
+    }
+
+    /* Disabled state for buttons */
+    .disabled {
+        opacity: 0.5;
+        pointer-events: none;
+        cursor: default;
+        animation: none !important;
+        box-shadow: none !important;
     }
 
     @keyframes yesBounceHue {
@@ -143,7 +153,7 @@
         }
     }
 
-    /* NO BUTTON funny movement + explosion */
+    /* NO BUTTON */
     #noBtn {
         padding: 14px 30px;
         font-size: 20px;
@@ -206,7 +216,7 @@
         50% { transform: translateX(-10px); }
     }
 
-    /* Responsive for phones */
+    /* Responsive */
     @media (max-width: 480px) {
         #yesBtn, #noBtn {
             font-size: 18px;
@@ -237,12 +247,12 @@
     <div class="blob blob3"></div>
 </div>
 
-<div id="overlay" aria-label="Project Cheyam splash screen">Project Cheyam</div>
+<div id="overlay" role="dialog" aria-modal="true" aria-label="Project Cheyam splash screen">Project Cheyam<br><small style="font-size:0.4em; margin-top: 10px; display:block;">Click anywhere to start</small></div>
 
 <div id="container" aria-live="polite">
     <h1>Do you want to continue?</h1>
-    <button id="yesBtn" aria-label="Click yes button">YES</button>
-    <button id="noBtn" aria-label="Click no button">NO</button>
+    <button id="yesBtn" class="disabled" aria-label="Click yes button">YES</button>
+    <button id="noBtn" class="disabled" aria-label="Click no button">NO</button>
     <div id="counter" aria-atomic="true">YES Count: 0</div>
 </div>
 
@@ -268,12 +278,17 @@ for (let i = 0; i < 40; i++) {
     document.body.appendChild(p);
 }
 
-// Disable overlay hiding to force YES clicks
-// overlay.addEventListener("click", () => {
-//     overlay.style.display = "none";
-// });
+// Overlay click to hide and enable buttons
+overlay.addEventListener("click", () => {
+    overlay.classList.add("hidden");
+    // Enable buttons
+    yesBtn.classList.remove("disabled");
+    noBtn.classList.remove("disabled");
+});
 
+// YES button click
 yesBtn.onclick = () => {
+    if (yesBtn.classList.contains("disabled")) return;
     if (yesCount < 100) {
         yesCount++;
         counter.innerText = "YES Count: " + yesCount;
@@ -285,8 +300,9 @@ yesBtn.onclick = () => {
     }
 };
 
-// Adjust NO button position to stay fully on screen
+// NO button movement
 function moveNoButton() {
+    if (noBtn.classList.contains("disabled")) return;
     const btnWidth = noBtn.offsetWidth;
     const btnHeight = noBtn.offsetHeight;
     const maxX = window.innerWidth - btnWidth;
@@ -302,6 +318,8 @@ function moveNoButton() {
 noBtn.onmouseover = moveNoButton;
 
 noBtn.onclick = (e) => {
+    if (noBtn.classList.contains("disabled")) return;
+
     noCount++;
 
     for (let i = 0; i < 8; i++) {
