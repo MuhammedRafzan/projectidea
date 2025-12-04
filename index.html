@@ -2,284 +2,213 @@
 <html>
 <head>
 <title>Project Cheyam</title>
-
 <style>
     body {
         margin: 0;
         font-family: "Poppins", sans-serif;
-        background: #111;
         overflow: hidden;
+        background: black;
     }
 
+    /* 🔥 Animated Background */
+    body::before {
+        content: "";
+        position: fixed;
+        inset: 0;
+        background: radial-gradient(circle, #222, #000);
+        animation: pulse 5s infinite alternate ease-in-out;
+        z-index: -2;
+    }
+
+    @keyframes pulse {
+        0% { transform: scale(1); filter: brightness(1); }
+        100% { transform: scale(1.2); filter: brightness(0.7); }
+    }
+
+    /* Floating particles */
+    .particle {
+        position: absolute;
+        width: 6px;
+        height: 6px;
+        background: white;
+        opacity: 0.6;
+        border-radius: 50%;
+        animation: floatUp 8s linear infinite;
+    }
+    @keyframes floatUp {
+        from { transform: translateY(100vh); }
+        to { transform: translateY(-10vh); }
+    }
+
+    /* Overlay lock */
     #overlay {
         position: fixed;
         inset: 0;
-        background: rgba(0,0,0,0.85);
+        background: rgba(0, 0, 0, 0.6);
         display: flex;
-        flex-direction: column;
         align-items: center;
-        z-index: 9999;
-        animation: fadeIn 1s ease-in-out;
-        padding-top: 40px;
+        justify-content: center;
+        flex-direction: column;
+        color: white;
+        font-size: 40px;
+        text-align: center;
     }
 
-    @keyframes fadeIn { from{opacity:0} to{opacity:1} }
-
-    #counterText {
-        font-size: 24px;
-        font-weight: 600;
-        margin-bottom: 20px;
-        text-shadow: 0 0 10px #0f0;
+    #container {
+        text-align: center;
+        color: white;
+        margin-top: 80px;
     }
 
-    #message {
-        font-size: 32px;
-        margin-bottom: 40px;
-        text-shadow: 0 0 20px #0f0;
-        animation: glow 2s infinite alternate;
-    }
-
-    @keyframes glow {
-        from { text-shadow: 0 0 10px #0f0; }
-        to   { text-shadow: 0 0 25px #0f0; }
-    }
-
-    #btnArea {
-        position: relative;
-        width: 100%;
-        height: 60%;
-    }
-
-    .btn {
-        padding: 15px 40px;
-        margin: 15px;
+    /* YES BUTTON animation */
+    #yesBtn {
+        padding: 15px 35px;
+        font-size: 22px;
+        margin: 20px;
         border: none;
-        font-size: 24px;
+        color: white;
+        background: #00c853;
         border-radius: 15px;
         cursor: pointer;
-        font-weight: 600;
+        animation: yesPulse 0.8s infinite alternate;
+    }
+    @keyframes yesPulse {
+        from { transform: scale(1); box-shadow: 0 0 10px #00ff6a; }
+        to { transform: scale(1.15); box-shadow: 0 0 20px #00ffcc; }
     }
 
-    #yesBtn {
-        background: #00ff88;
-        color: #000;
-        box-shadow: 0 0 20px #00ff88;
-        transition: transform .2s;
-    }
-
-    #yesBtn:active { transform: scale(1.25); }
-
+    /* NO BUTTON funny movement + explosion */
     #noBtn {
-        background: #ff0044;
-        color: #fff;
+        padding: 15px 35px;
+        font-size: 22px;
+        border: none;
+        color: white;
+        background: #d50000;
+        border-radius: 15px;
+        cursor: pointer;
         position: absolute;
+        top: 60%;
         left: 50%;
-        top: 50%;
-        box-shadow: 0 0 20px #ff0044;
-        transition: transform .2s;
-        z-index: 20;
+        transform: translate(-50%, -50%);
+        transition: 0.2s;
     }
 
-    @keyframes shakeScreen {
-        0% { transform: translate(0, 0); }
-        25% { transform: translate(8px, -8px); }
-        50% { transform: translate(-8px, 8px); }
-        75% { transform: translate(8px, 8px); }
-        100% { transform: translate(0, 0); }
-    }
-
-    /* EXPLOSION PARTICLES */
-    .particle {
+    /* Explosion particles */
+    .explode {
         position: absolute;
-        width: 10px;
-        height: 10px;
-        background: #ff0044;
+        width: 8px;
+        height: 8px;
+        background: yellow;
         border-radius: 50%;
-        animation: explode 0.6s ease-out forwards;
+        animation: boom 0.6s forwards;
+    }
+    @keyframes boom {
+        from { transform: scale(1); opacity: 1; }
+        to { transform: scale(4); opacity: 0; }
     }
 
-    @keyframes explode {
-        from { opacity: 1; transform: scale(1); }
-        to   { opacity: 0; transform: translate(var(--x), var(--y)) scale(0.2); }
+    #counter {
+        font-size: 28px;
+        margin-top: 20px;
+        color: #00e5ff;
     }
 
-    /* SCARY POPUP */
+    /* Scary popup */
     #scarePopup {
         position: fixed;
         inset: 0;
-        background: rgba(0,0,0,0.95);
+        background: rgba(0, 0, 0, 0.9);
         display: none;
         justify-content: center;
         align-items: center;
-        z-index: 999999;
+        color: red;
+        font-size: 60px;
+        font-weight: bold;
+        animation: shake 0.1s infinite;
     }
-
-    #scarePopup img {
-        width: 60%;
-        animation: scaryFlash 0.2s ease-in-out;
-    }
-
-    @keyframes scaryFlash {
-        from { transform: scale(0.4); opacity: 0; }
-        to { transform: scale(1); opacity: 1; }
+    @keyframes shake {
+        0%, 100% { transform: translateX(0); }
+        50% { transform: translateX(-10px); }
     }
 </style>
 </head>
-
 <body>
 
-<!-- Background Music -->
-<audio id="bgm" loop>
-    <source src="https://www.fesliyanstudios.com/play-mp3/387" type="audio/mpeg">
-</audio>
+<div id="overlay">Project Cheyam</div>
 
-<div id="overlay">
-    <p id="counterText">Yes: 0 | No: 0 | Goal: 100</p>
-    <p id="message">Project cheyam?</p>
-
-    <button class="btn" id="yesBtn">Yes</button>
-
-    <div id="btnArea">
-        <button class="btn" id="noBtn">No</button>
-    </div>
+<div id="container">
+    <h1>Do you want to continue?</h1>
+    <button id="yesBtn">YES</button>
+    <button id="noBtn">NO</button>
+    <div id="counter">YES Count: 0</div>
 </div>
 
-<!-- Scary Popup -->
-<div id="scarePopup">
-    <img src="https://i.imgur.com/8R2ZP1K.png">
-</div>
+<div id="scarePopup">YOU CAN'T ESCAPE!</div>
 
 <script>
+let yesCount = 0;
+let noCount = 0;
 
-    let yesCount = 0;
-    let noCount = 0;
-    let goal = 100;
+// 🔥 Animated particles
+for (let i = 0; i < 40; i++) {
+    let p = document.createElement("div");
+    p.className = "particle";
+    p.style.left = Math.random() * 100 + "vw";
+    p.style.animationDelay = Math.random() * 5 + "s";
+    p.style.opacity = Math.random();
+    document.body.appendChild(p);
+}
 
-    const counterText = document.getElementById("counterText");
-    const noBtn = document.getElementById("noBtn");
-    const btnArea = document.getElementById("btnArea");
+document.getElementById("overlay").addEventListener("click", () => {
+    document.getElementById("overlay").style.display = "none";
+});
 
-    const bgm = document.getElementById("bgm");
+document.getElementById("yesBtn").onclick = () => {
+    yesCount++;
+    document.getElementById("counter").innerText = "YES Count: " + yesCount;
 
-    function updateDisplay() {
-        counterText.textContent = `Yes: ${yesCount} | No: ${noCount} | Goal: ${goal}`;
-    }
-
-    // ---------------- EXIT BLOCKER ---------------------
-    function blockExit(event) {
-        if (yesCount < goal) {
-            event.preventDefault();
-            event.returnValue = "❗Finish 100 YES clicks!";
-            return "❗Finish 100 YES clicks!";
-        }
-    }
-
-    window.onbeforeunload = blockExit;
-    window.addEventListener("beforeunload", blockExit);
-
-    history.pushState(null, "", location.href);
-    window.onpopstate = () => {
-        if (yesCount < goal) {
-            alert("🚫 No exit! Click 100 YES first!");
-            history.pushState(null, "", location.href);
-        }
-    };
-
-    document.addEventListener("visibilitychange", () => {
-        if (document.hidden && yesCount < goal) {
-            alert("🚫 No hiding! Finish 100 YES!");
-            location.reload();
-        }
-    });
-
-    function unlockExit() {
+    if (yesCount >= 100) {
+        alert("You are free now!");
         window.onbeforeunload = null;
-        window.removeEventListener("beforeunload", blockExit);
+    }
+};
+
+document.getElementById("noBtn").onmouseover = () => {
+    let btn = document.getElementById("noBtn");
+    btn.style.top = Math.random() * 80 + "vh";
+    btn.style.left = Math.random() * 80 + "vw";
+};
+
+document.getElementById("noBtn").onclick = (e) => {
+    noCount++;
+
+    // explosion effect
+    for (let i = 0; i < 8; i++) {
+        let particle = document.createElement("div");
+        particle.className = "explode";
+        particle.style.left = (e.clientX - 10) + "px";
+        particle.style.top = (e.clientY - 10) + "px";
+        document.body.appendChild(particle);
+        setTimeout(() => particle.remove(), 600);
     }
 
-    // ---------------- FULLSCREEN + MUSIC -------------------------
-    document.addEventListener("click", () => {
-        if (!document.fullscreenElement) {
-            document.documentElement.requestFullscreen().catch(() => {});
-        }
-        bgm.play().catch(()=>{});
-    });
-
-    // ---------------- YES BUTTON --------------------------
-    document.getElementById("yesBtn").onclick = function () {
-        yesCount++;
-        updateDisplay();
-
-        if (yesCount >= goal) {
-            unlockExit();
-            document.getElementById("overlay").style.display = "none";
-            alert("Okay! Project Cheyam! 🎉");
-        }
-    };
-
-    // ---------------- NO BUTTON ----------------------------
-    noBtn.onclick = function () {
-        noCount++;
-        goal++;
-        updateDisplay();
-
-        explodeButton(noBtn);
-        scaryPopup();
-
-        document.getElementById("message").textContent =
-            `No clicked! Goal → ${goal} 😈`;
-
-        document.body.style.animation = "shakeScreen 0.4s";
-        setTimeout(() => document.body.style.animation = "", 400);
-
-        moveNoButton();
-    };
-
-    // ---------------- MOVE NO BUTTON -------------------------
-    function moveNoButton() {
-        const rect = btnArea.getBoundingClientRect();
-        const x = Math.random() * (rect.width - 150);
-        const y = Math.random() * (rect.height - 80);
-
-        noBtn.style.left = x + "px";
-        noBtn.style.top = y + "px";
+    if (noCount === 50) {
+        document.getElementById("scarePopup").style.display = "flex";
+        setTimeout(() => {
+            document.getElementById("scarePopup").style.display = "none";
+        }, 2000);
     }
+};
 
-    // ---------------- EXPLODING BUTTON -------------------------
-    function explodeButton(btn) {
-        const rect = btn.getBoundingClientRect();
-        for (let i = 0; i < 20; i++) {
-            let p = document.createElement("div");
-            p.classList.add("particle");
+// 🔒 Prevent closing / quitting
+window.onbeforeunload = function () {
+    return "You cannot exit until YES = 100.";
+};
 
-            let angle = Math.random() * Math.PI * 2;
-            let distance = Math.random() * 120 + 30;
-
-            p.style.setProperty("--x", `${Math.cos(angle) * distance}px`);
-            p.style.setProperty("--y", `${Math.sin(angle) * distance}px`);
-
-            p.style.left = rect.left + rect.width / 2 + "px";
-            p.style.top = rect.top + rect.height / 2 + "px";
-
-            document.body.appendChild(p);
-
-            setTimeout(() => p.remove(), 600);
-        }
-    }
-
-    // ---------------- SCARY POPUP -------------------------
-    function scaryPopup() {
-        const chance = Math.random();
-        if (chance < 0.35) {   // 35% chance
-            const popup = document.getElementById("scarePopup");
-            popup.style.display = "flex";
-
-            setTimeout(() => {
-                popup.style.display = "none";
-            }, 800);
-        }
-    }
-
+document.addEventListener("contextmenu", e => e.preventDefault());
+document.addEventListener("keydown", e => {
+    if (["Escape", "F5", "F11", "F12"].includes(e.key)) e.preventDefault();
+});
 </script>
 
 </body>
