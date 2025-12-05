@@ -1,379 +1,1028 @@
-<!DOCTYPE html>
-<html lang="en">
+<!doctype html>
+<html>
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Project Cheyam</title>
-<style>
+  <meta charset="utf-8" />
+  <title>Bus Route Planner — Final Working Single File</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+ <style>
+    /* ----------------------------
+       BUSFLEET PRO – CORPORATE THEME
+    ----------------------------- */
+
+    :root {
+      --primary: #ff6b00;
+      --primary-dark: #e05e00;
+      --text-dark: #1e293b;
+      --text-light: #6b7280;
+      --bg: #f5f6fa;
+      --card: #ffffff;
+      --border: #e5e7eb;
+      --header-bg: #222831;
+      --header-text: #ffffff;
+    }
+
+    /* Global */
     body {
-        margin: 0;
-        font-family: "Poppins", sans-serif;
-        overflow: hidden;
-        background: #000;
-        position: relative;
-        min-height: 100vh;
-        color: white;
+      font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto;
+      background: var(--bg);
+      margin: 0;
+      color: var(--text-dark);
     }
 
-    /* Background blobs */
-    .background-blobs {
-        position: fixed;
-        inset: 0;
-        overflow: hidden;
-        z-index: -3;
+    /* Header */
+    header {
+      padding: 16px 22px;
+      background: var(--header-bg);
+      color: var(--header-text);
+      display: flex;
+      align-items: center;
+      border-bottom: 3px solid var(--primary);
+    }
+    header h1 {
+      margin: 0;
+      font-size: 20px;
+      font-weight: 600;
     }
 
-    .blob {
-        position: absolute;
-        border-radius: 50%;
-        filter: blur(100px);
-        opacity: 0.6;
-        mix-blend-mode: screen;
-        animation-timing-function: ease-in-out;
-        animation-iteration-count: infinite;
+    /* Layout */
+    main {
+      padding: 24px;
+      max-width: 1100px;
+      margin: 0 auto;
     }
 
-    .blob1 {
-        width: 300px;
-        height: 300px;
-        background: #00ffcc;
-        top: 20%;
-        left: 10%;
-        animation: blobMove1 15s infinite alternate;
-    }
-    .blob2 {
-        width: 400px;
-        height: 400px;
-        background: #ff0080;
-        top: 50%;
-        left: 70%;
-        animation: blobMove2 18s infinite alternate;
-    }
-    .blob3 {
-        width: 350px;
-        height: 350px;
-        background: #00ffff;
-        top: 70%;
-        left: 40%;
-        animation: blobMove3 20s infinite alternate;
+    /* Cards */
+    .card {
+      background: var(--card);
+      border-radius: 12px;
+      padding: 20px;
+      border: 1px solid var(--border);
+      box-shadow: 0 4px 14px rgba(0,0,0,0.05);
+      margin-bottom: 20px;
     }
 
-    @keyframes blobMove1 {
-        0% { transform: translate(0, 0) scale(1); }
-        100% { transform: translate(30px, -20px) scale(1.1); }
+    /* Buttons */
+    .btn {
+      padding: 10px 14px;
+      border-radius: 8px;
+      border: none;
+      font-weight: 600;
+      cursor: pointer;
+      transition: 0.18s ease;
     }
-    @keyframes blobMove2 {
-        0% { transform: translate(0, 0) scale(1); }
-        100% { transform: translate(-40px, 40px) scale(1.15); }
+    .btn-full { width: 100%; }
+
+    .btn-primary { background: var(--primary); color: white; }
+    .btn-primary:hover { background: var(--primary-dark); }
+
+    .btn-muted { background: #9ca3af; color: white; }
+    .btn-muted:hover { background: #6b7280; }
+
+    .btn-red { background: #ef4444; color: white; }
+    .btn-red:hover { background: #dc2626; }
+
+    .btn-green { background: #22c55e; color: white; }
+    .btn-green:hover { background: #1aaa4b; }
+
+    /* Inputs */
+    input, select {
+      width: 100%;
+      padding: 12px;
+      margin: 10px 0;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: #fafafa;
+      font-size: 15px;
+      box-sizing: border-box;
     }
-    @keyframes blobMove3 {
-        0% { transform: translate(0, 0) scale(1); }
-        100% { transform: translate(20px, 30px) scale(1.05); }
+    input:focus {
+      border-color: var(--primary);
+      outline: none;
+      background: #fff;
     }
 
-    /* Floating particles */
-    .particle {
-        position: fixed;
-        width: 6px;
-        height: 6px;
-        background: #0ff;
-        border-radius: 50%;
-        opacity: 0.3;
-        animation: floatParticle 10s linear infinite;
-        pointer-events: none;
-    }
-    @keyframes floatParticle {
-        0% { transform: translateY(0); }
-        100% { transform: translateY(-100vh); }
+    /* Typography */
+    h2, h3 { margin: 10px 0; color: var(--text-dark); }
+    .small { font-size: 0.9rem; color: var(--text-light); }
+    .error { color: #b91c1c; margin-top: 6px; }
+
+    /* List Items */
+    .list-item {
+      background: var(--card);
+      border: 1px solid var(--border);
+      padding: 14px;
+      margin: 10px 0;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.04);
     }
 
-    /* Overlay lock */
-    #overlay {
-        position: fixed;
-        inset: 0;
-        background: rgba(0, 0, 0, 0.8);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: white;
-        font-size: 50px;
-        font-weight: bold;
-        user-select: none;
-        z-index: 10;
-        cursor: pointer;
-        transition: opacity 0.5s ease;
+    /* Passenger nearest bus list */
+    .near-list .near-item {
+      padding: 12px;
+      border-radius: 10px;
+      background: white;
+      border: 1px solid #e9eaef;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin: 10px 0;
     }
-    #overlay.hidden {
-        opacity: 0;
-        pointer-events: none;
+    .muted-xs {
+      font-size: 0.8rem;
+      color: #6b7280;
     }
 
-    #container {
-        text-align: center;
-        color: white;
-        margin-top: 80px;
-        position: relative;
-        z-index: 1;
-        padding: 0 10px;
-        max-width: 400px;
-        margin-left: auto;
-        margin-right: auto;
-        user-select: none;
+    /* Map Card */
+    #mapCard {
+      background: var(--card);
+      box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+      border: 1px solid var(--border);
+      padding: 20px;
+      border-radius: 14px;
+    }
+    #map {
+      height: 480px;
+      border-radius: 10px;
+      margin-top: 14px;
+      border: 1px solid var(--border);
+      display: none;
+    }
+    /* Animated Background Circles */
+.animated-bg {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  z-index: -1;
+  background: var(--bg);
+}
+
+.circle {
+  position: absolute;
+  border-radius: 50%;
+  background: rgba(255, 107, 0, 0.15); /* matches BusFleet orange */
+  animation: floatUp linear infinite;
+}
+
+@keyframes floatUp {
+  from {
+    transform: translateY(100vh) scale(1);
+    opacity: 0.6;
+  }
+  to {
+    transform: translateY(-10vh) scale(1.4);
+    opacity: 0;
+  }
+}
+
+
+    /* Tile warning */
+    .tile-warning {
+      color: #92400e;
+      background: #fff7ed;
+      padding: 10px;
+      border-radius: 8px;
+      margin-top: 10px;
+      font-size: 0.9rem;
+      border: 1px solid #ffe7cc;
     }
 
-    h1 {
-        font-size: 1.8rem;
-        margin-bottom: 30px;
-    }
+    /* Row Layout */
+    .row { display: flex; gap: 14px; }
+    .col { flex: 1; }
 
-    /* YES BUTTON bounce + color shifting */
-    #yesBtn {
-        padding: 14px 30px;
-        font-size: 20px;
-        margin: 20px;
-        border: none;
-        color: white;
-        background: #00c853;
-        border-radius: 15px;
-        cursor: pointer;
-        animation: yesBounceHue 2s infinite ease-in-out;
-        box-shadow: 0 0 10px #00ff6a;
-        transition: box-shadow 0.3s ease;
-        display: inline-block;
-        min-width: 100px;
-        user-select: none;
+    /* Loading animation */
+    .loading-dot {
+      width: 10px;
+      height: 10px;
+      background: var(--primary);
+      border-radius: 50%;
+      animation: pulse 1s infinite;
+      display: inline-block;
+      margin-left: 6px;
     }
-
-    /* Disabled state for buttons */
-    .disabled {
-        opacity: 0.5;
-        pointer-events: none;
-        cursor: default;
-        animation: none !important;
-        box-shadow: none !important;
+    @keyframes pulse {
+      0% { opacity: 1; }
+      50% { opacity: 0.3; }
+      100% { opacity: 1; }
     }
-
-    @keyframes yesBounceHue {
-        0% {
-            transform: translateY(0) scale(1);
-            filter: hue-rotate(0deg);
-            box-shadow: 0 0 10px #00ff6a;
-        }
-        50% {
-            transform: translateY(-12px) scale(1.1);
-            filter: hue-rotate(90deg);
-            box-shadow: 0 0 25px #00ffa0;
-        }
-        100% {
-            transform: translateY(0) scale(1);
-            filter: hue-rotate(0deg);
-            box-shadow: 0 0 10px #00ff6a;
-        }
-    }
-
-    /* NO BUTTON */
-    #noBtn {
-        padding: 14px 30px;
-        font-size: 20px;
-        border: none;
-        color: white;
-        background: #d50000;
-        border-radius: 15px;
-        cursor: pointer;
-        position: absolute;
-        top: 60%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        transition: 0.2s;
-        user-select: none;
-        min-width: 100px;
-    }
-
-    /* Explosion particles */
-    .explode {
-        position: absolute;
-        width: 8px;
-        height: 8px;
-        background: yellow;
-        border-radius: 50%;
-        animation: boom 0.6s forwards;
-        pointer-events: none;
-        z-index: 20;
-    }
-    @keyframes boom {
-        from { transform: scale(1); opacity: 1; }
-        to { transform: scale(4); opacity: 0; }
-    }
-
-    #counter {
-        font-size: 26px;
-        margin-top: 20px;
-        color: #00e5ff;
-        user-select: none;
-    }
-
-    /* Scary popup */
-    #scarePopup {
-        position: fixed;
-        inset: 0;
-        background: rgba(0, 0, 0, 0.95);
-        display: none;
-        justify-content: center;
-        align-items: center;
-        color: red;
-        font-size: 60px;
-        font-weight: bold;
-        animation: shake 0.1s infinite;
-        user-select: none;
-        z-index: 100;
-        padding: 10px;
-        text-align: center;
-    }
-    @keyframes shake {
-        0%, 100% { transform: translateX(0); }
-        50% { transform: translateX(-10px); }
-    }
-
-    /* Responsive */
-    @media (max-width: 480px) {
-        #yesBtn, #noBtn {
-            font-size: 18px;
-            padding: 12px 25px;
-            min-width: 80px;
-        }
-        #counter {
-            font-size: 22px;
-        }
-        h1 {
-            font-size: 1.4rem;
-        }
-        #overlay {
-            font-size: 36px;
-        }
-        #scarePopup {
-            font-size: 36px;
-        }
-    }
-</style>
+  </style>
 </head>
 <body>
+    <!-- Floating Animated Background -->
+<div class="animated-bg" id="floatingBg"></div>
 
-<!-- Background blobs -->
-<div class="background-blobs" aria-hidden="true">
-    <div class="blob blob1"></div>
-    <div class="blob blob2"></div>
-    <div class="blob blob3"></div>
-</div>
+  <header>
+    <h1>Bus Route Planner — Final</h1>
+    <div style="margin-left:auto">
+      <button id="homeBtn" class="btn btn-muted">Home</button>
+    </div>
+  </header>
 
-<!-- Overlay is now blank -->
-<div id="overlay" role="dialog" aria-modal="true" aria-label="Loading screen"></div>
+  <main>
+    <div id="app"></div>
 
-<div id="container" aria-live="polite">
-    <h1>Do you want to continue?</h1>
-    <button id="yesBtn" class="disabled" aria-label="Click yes button" aria-pressed="false">YES</button>
-    <button id="noBtn" class="disabled" aria-label="Click no button">NO</button>
-    <div id="counter" aria-atomic="true">YES Count: 0</div>
-</div>
+    <div class="card" id="mapCard" style="max-width:1000px; display:none;">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <div>
+          <div class="bus-meta" id="mapTitle">Route</div>
+          <div class="muted-sm" id="mapSubtitle">Showing route</div>
+        </div>
+        <div style="display:flex; gap:8px;">
+          <button id="closeMap" class="btn btn-muted">Close Map</button>
+        </div>
+      </div>
+      <div id="map"></div>
+      <div id="tileMsg" style="display:none" class="tile-warning">Tile server issue detected — using fallback tiles.</div>
+    </div>
+  </main>
 
-<div id="scarePopup" role="alert" aria-live="assertive">YOU CAN'T ESCAPE!</div>
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 
-<script>
-let yesCount = 0;
-let noCount = 0;
+  <script>
+    // -------------------------
+    // Storage & helpers
+    // -------------------------
+    const ADMIN_KEY = 'bus_app_admin_creds';
+    const GEO_CACHE = 'bus_app_geo_cache';
+    const ROUTE_CACHE_KEY = 'bus_app_route_cache';
 
-const overlay = document.getElementById("overlay");
-const yesBtn = document.getElementById("yesBtn");
-const noBtn = document.getElementById("noBtn");
-const counter = document.getElementById("counter");
-const scarePopup = document.getElementById("scarePopup");
+    function getStoredAdmin() {
+      const raw = localStorage.getItem(ADMIN_KEY);
+      if (!raw) return null;
+      try { return JSON.parse(raw); } catch(e){ return null; }
+    }
+    function setStoredAdmin(username, password) {
+      localStorage.setItem(ADMIN_KEY, JSON.stringify({ username, password }));
+    }
+    function getGeoCache() {
+      try { return JSON.parse(localStorage.getItem(GEO_CACHE) || '{}'); } catch(e){ return {}; }
+    }
+    function setGeoCache(obj) { localStorage.setItem(GEO_CACHE, JSON.stringify(obj)); }
+    function getRouteCache() {
+      try { return JSON.parse(localStorage.getItem(ROUTE_CACHE_KEY) || '{}'); } catch(e){ return {}; }
+    }
+    function setRouteCache(obj) { localStorage.setItem(ROUTE_CACHE_KEY, JSON.stringify(obj)); }
 
-// Floating particles
-for (let i = 0; i < 40; i++) {
-    let p = document.createElement("div");
-    p.className = "particle";
-    p.style.left = Math.random() * 100 + "vw";
-    p.style.top = Math.random() * 100 + "vh";
-    p.style.animationDelay = Math.random() * 10 + "s";
-    p.style.opacity = Math.random() * 0.6 + 0.2;
-    document.body.appendChild(p);
+    if (!getStoredAdmin()) setStoredAdmin('admin','1234');
+
+    const app = document.getElementById('app');
+
+    // in-memory buses (ensure routeCoordinates available)
+    let buses = [
+      { name: 'Kollam Express', from: 'Kollam', to: 'Paripally', cur: 'Kollam', routeCoordinates: null }
+    ];
+
+    // built-in coords
+    const BUILT_IN = {
+      'kollam': [8.8860, 76.5916],
+      'paripally': [8.8192, 76.7945],
+      'chathannoor': [8.8244, 76.7225],
+      'thamalam': [8.8, 76.7],
+      'trivandrum': [8.5241, 76.9366],
+      'ernakulam': [9.9816, 76.2999],
+      'kochi': [9.9312, 76.2673]
+    };
+
+    // -------------------------
+    // UI: login/admin/passenger
+    // -------------------------
+    function loadLogin(){
+      app.innerHTML = `
+        <div class="card" style="max-width:640px; margin:28px auto;">
+          <h2 style="text-align:center">Login</h2>
+          <div style="display:grid; gap:10px; margin-top:14px;">
+            <button id="adminBtn" class="btn btn-primary btn-full">Admin Login</button>
+            <button id="passBtn" class="btn btn-green btn-full">Passenger Login</button>
+          </div>
+          <p class="small" style="margin-top:12px">Demo admin credentials: <b>admin</b> / <b>1234</b>.</p>
+        </div>
+      `;
+      document.getElementById('adminBtn').onclick = loadAdminLogin;
+      document.getElementById('passBtn').onclick = loadPassengerLogin;
+    }
+
+    function loadAdminLogin(){
+      const adminCreds = getStoredAdmin();
+      app.innerHTML = `
+        <div class="card" style="max-width:640px; margin:28px auto;">
+          <h2>Admin Login</h2>
+          <div>
+            <input id="adminUser" placeholder="Username" autocomplete="username">
+            <input id="adminPass" type="password" placeholder="Password" autocomplete="current-password">
+            <div id="adminError" class="error" style="display:none"></div>
+            <button id="adminLoginBtn" class="btn btn-primary" style="margin-top:10px">Login</button>
+            <button id="adminBackBtn" class="btn btn-muted" style="margin-top:8px">Back</button>
+            <hr style="margin:12px 0" />
+            <h3 style="margin-top:0">Admin Setup</h3>
+            <p class="small">Change admin username/password (stored locally).</p>
+            <input id="newAdminUser" placeholder="New admin username">
+            <input id="newAdminPass" type="password" placeholder="New admin password">
+            <button id="saveAdminBtn" class="btn" style="background:#1f2937;color:white;margin-top:8px">Save Admin Credentials</button>
+            <div id="saveMsg" class="small" style="margin-top:8px;display:none"></div>
+          </div>
+        </div>
+      `;
+      if (adminCreds) document.getElementById('adminUser').value = adminCreds.username;
+
+      function adminAuth(){
+        const errEl = document.getElementById('adminError');
+        errEl.style.display = 'none';
+        const u = (document.getElementById('adminUser').value||'').trim();
+        const p = (document.getElementById('adminPass').value||'').trim();
+        if (!u||!p){ errEl.textContent='Please enter both username and password.'; errEl.style.display='block'; return;}
+        const creds = getStoredAdmin();
+        if (creds && u===creds.username && p===creds.password) loadAdminPanel();
+        else { errEl.textContent='Invalid admin credentials.'; errEl.style.display='block'; }
+      }
+      document.getElementById('adminLoginBtn').onclick = adminAuth;
+      document.getElementById('adminBackBtn').onclick = loadLogin;
+      document.getElementById('saveAdminBtn').onclick = () => {
+        const nu = (document.getElementById('newAdminUser').value||'').trim();
+        const np = (document.getElementById('newAdminPass').value||'').trim();
+        const msg = document.getElementById('saveMsg'); msg.style.display = 'none';
+        if (!nu||!np){ msg.textContent='Both fields required to change admin credentials.'; msg.style.display='block'; return; }
+        setStoredAdmin(nu,np);
+        msg.textContent='Admin credentials updated locally.'; msg.style.display='block';
+        document.getElementById('adminUser').value = nu;
+        document.getElementById('newAdminUser').value=''; document.getElementById('newAdminPass').value='';
+      };
+    }
+
+    function loadAdminPanel(){
+      app.innerHTML = `
+        <div style="padding:20px; max-width:900px; margin:20px auto;">
+          <h2>🛠 Admin Dashboard</h2>
+          <div class="card" style="max-width:640px;">
+            <h3>Add Bus</h3>
+            <input id="busName" placeholder="Bus Name">
+            <input id="fromLoc" placeholder="Departure Location (e.g. Kollam)">
+            <input id="toLoc" placeholder="Destination Location (e.g. Paripally)">
+            <input id="currentLoc" placeholder="Current Bus Location (e.g. Kollam)">
+            <button id="addBusBtn" class="btn btn-primary" style="margin-top:8px">Add Bus</button>
+          </div>
+
+          <h3 style="margin-top:22px;">All Buses</h3>
+          <div id="busList" style="max-width:680px;"></div>
+
+          <div style="margin-top:18px; display:flex; gap:8px; max-width:680px;">
+            <button id="logoutBtn" class="btn btn-muted">Logout</button>
+            <button id="clearBuses" class="btn btn-red">Clear Buses</button>
+          </div>
+        </div>
+      `;
+      document.getElementById('addBusBtn').onclick = addBus;
+      document.getElementById('logoutBtn').onclick = loadLogin;
+      document.getElementById('clearBuses').onclick = () => { buses = []; refreshBusList(); };
+      refreshBusList();
+    }
+
+    function addBus(){
+      const name = (document.getElementById('busName').value||'').trim();
+      const from = (document.getElementById('fromLoc').value||'').trim();
+      const to = (document.getElementById('toLoc').value||'').trim();
+      const cur = (document.getElementById('currentLoc').value||'').trim();
+      if (!name||!from||!to||!cur){ alert('Fill all fields'); return; }
+      buses.push({ name, from, to, cur, routeCoordinates: null });
+      document.getElementById('busName').value=''; document.getElementById('fromLoc').value=''; document.getElementById('toLoc').value=''; document.getElementById('currentLoc').value='';
+      refreshBusList();
+    }
+
+    function refreshBusList(){
+      const list = document.getElementById('busList');
+      if (!list) return;
+      list.innerHTML = '';
+      if (buses.length === 0) {
+        list.innerHTML = '<div class="list-item small">No buses added yet.</div>';
+        return;
+      }
+      buses.forEach((b, idx) => {
+        const div = document.createElement('div');
+        div.className = 'list-item';
+        div.innerHTML = `
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <div>
+              <div style="font-weight:700">${escapeHtml(b.name)}</div>
+              <div class="small">Route: ${escapeHtml(b.from)} → ${escapeHtml(b.to)}</div>
+              <div class="small">Current: ${escapeHtml(b.cur)}</div>
+            </div>
+            <div style="display:flex; gap:6px; align-items:center;">
+              <button data-idx="${idx}" class="btn" style="padding:8px 10px; background:#10b981; color:white; border-radius:6px">Set Pickup</button>
+              <button data-view="${idx}" class="btn" style="padding:8px 10px; background:#1f6feb; color:white; border-radius:6px">View Route</button>
+              <button data-del="${idx}" class="btn" style="padding:8px 10px; background:#ef4444; color:white; border-radius:6px">Delete</button>
+            </div>
+          </div>
+        `;
+        list.appendChild(div);
+      });
+
+      // handlers
+      list.querySelectorAll('[data-idx]').forEach(btn => {
+        btn.onclick = (e) => {
+          const idx = Number(e.currentTarget.getAttribute('data-idx'));
+          const pickup = prompt('Enter pickup location to set for this bus:', buses[idx].cur);
+          if (pickup !== null) {
+            buses[idx].cur = pickup.trim() || buses[idx].cur;
+            refreshBusList();
+          }
+        };
+      });
+      list.querySelectorAll('[data-del]').forEach(btn => {
+        btn.onclick = (e) => {
+          const idx = Number(e.currentTarget.getAttribute('data-del'));
+          if (confirm('Delete this bus?')) {
+            buses.splice(idx,1);
+            refreshBusList();
+          }
+        };
+      });
+      // View route
+      list.querySelectorAll('[data-view]').forEach(btn => {
+        btn.onclick = async (e) => {
+          const idx = Number(e.currentTarget.getAttribute('data-view'));
+          const b = buses[idx];
+          const pts = [b.from];
+          if (b.cur && b.cur.toLowerCase() !== b.from.toLowerCase() && b.cur.toLowerCase() !== b.to.toLowerCase()) pts.push(b.cur);
+          if (!pts.includes(b.to)) pts.push(b.to);
+          await showRouteForPoints(pts, `Admin: ${b.name}`, `${b.from} → ${pts.slice(1,pts.length-1).join(' → ')} → ${b.to}`, idx);
+        };
+      });
+    }
+
+    // -------------------------
+    // Passenger flow
+    // -------------------------
+    function loadPassengerLogin(){
+      app.innerHTML = `
+        <div class="card" style="max-width:640px; margin:28px auto;">
+          <h2>Passenger</h2>
+          <input id="pname" placeholder="Enter your name">
+          <button id="continuePassenger" class="btn btn-green">Continue</button>
+          <button id="backFromPassenger" class="btn btn-muted" style="margin-top:8px">Back</button>
+        </div>
+      `;
+      document.getElementById('continuePassenger').onclick = () => {
+        const name = (document.getElementById('pname').value||'').trim();
+        if (!name){ alert('Please enter your name'); return; }
+        loadPassengerPanel(name);
+      };
+      document.getElementById('backFromPassenger').onclick = loadLogin;
+    }
+
+    function loadPassengerPanel(name){
+      app.innerHTML = `
+        <div style="padding:20px; max-width:700px; margin:0 auto;">
+          <h2>🧍 Passenger Panel</h2>
+          <div class="card" style="max-width:640px;">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <div>
+                <div style="font-weight:700">${escapeHtml(name)}</div>
+                <div class="small">Enter pickup to find matching bus or find nearby buses</div>
+              </div>
+            </div>
+            <input id="pickup" placeholder="Enter your pickup location (e.g. Chathannoor)">
+            <div style="display:flex; gap:8px;">
+              <button id="findBtn" class="btn btn-primary">Find Bus & Show Route</button>
+              <button id="nearBtn" class="btn btn-green">Find Nearby Buses</button>
+            </div>
+            <div id="result" style="margin-top:12px"></div>
+            <div id="nearList" class="near-list" style="margin-top:12px"></div>
+            <button id="logoutBtn" class="btn btn-muted" style="margin-top:12px">Logout</button>
+          </div>
+        </div>
+      `;
+      document.getElementById('findBtn').onclick = passengerFindBus;
+      document.getElementById('nearBtn').onclick = () => {
+        const loc = (document.getElementById('pickup').value||'').trim();
+        if (!loc) { alert('Enter a location to search nearby buses'); return; }
+        findNearestBuses(loc);
+      };
+      document.getElementById('logoutBtn').onclick = loadLogin;
+    }
+
+    // -------------------------
+    // Map & routing (optimized)
+    // -------------------------
+    let map = null;
+    let routeLayer = null;
+    let markers = [];
+    let tileLayer = null;
+    let fallbackAttempted = false;
+
+    function setBusy(state, msg) {
+      const subtitle = document.getElementById('mapSubtitle');
+      if (!subtitle) return;
+      subtitle.innerHTML = msg ? escapeHtml(msg) + (state ? '<span class="loading-dot"></span>' : '') : (state ? 'Working...' : 'Showing route');
+    }
+
+    function initMapIfNeeded() {
+      const mapCard = document.getElementById('mapCard');
+      const mapEl = document.getElementById('map');
+      if (!map) {
+        map = L.map('map', { zoomControl: true }).setView([8.85,76.6], 11);
+        tileLayer = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          maxZoom: 19,
+          attribution: '&copy; OpenStreetMap contributors',
+          crossOrigin: true
+        });
+        tileLayer.addTo(map);
+
+        tileLayer.on('tileerror', (err) => {
+          if (fallbackAttempted) return;
+          fallbackAttempted = true;
+          console.warn('Tile error detected. Switching to fallback tile provider.', err);
+          const tileMsg = document.getElementById('tileMsg');
+          if (tileMsg) tileMsg.style.display = 'block';
+          try { map.removeLayer(tileLayer); } catch(e){}
+          tileLayer = L.tileLayer('https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '&copy; OpenStreetMap contributors, Tiles style by Humanitarian OSM',
+            subdomains: ['a','b','c'],
+            crossOrigin: true
+          });
+          tileLayer.addTo(map);
+        });
+      }
+      mapEl.style.display = 'block';
+      mapCard.style.display = 'block';
+      setTimeout(() => { try { map.invalidateSize(); } catch(e){} }, 120);
+    }
+
+    document.getElementById('closeMap').onclick = () => {
+      const mapCard = document.getElementById('mapCard');
+      if (routeLayer) { try { map.removeLayer(routeLayer); } catch(e){} routeLayer = null; }
+      markers.forEach(m => { try { map.removeLayer(m); } catch(e){} });
+      markers = [];
+      mapCard.style.display = 'none';
+      document.getElementById('map').style.display = 'none';
+    };
+
+    // resolvePlacesToCoords: returns array of {name, coord: [lat, lon], source}
+    async function resolvePlacesToCoords(placeNames) {
+      const geoCache = getGeoCache();
+      const requests = placeNames.map(pRaw => {
+        const p = (pRaw||'').trim();
+        const key = p.toLowerCase();
+        if (!p) return Promise.resolve({ name: p, coord: null });
+        if (BUILT_IN[key]) return Promise.resolve({ name: p, coord: BUILT_IN[key], source: 'built-in' });
+        if (geoCache[key]) return Promise.resolve({ name: p, coord: geoCache[key], source: 'cache' });
+        const q = encodeURIComponent(p);
+        const url = `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${q}`;
+        return fetch(url, { headers: { 'Accept-Language': 'en' } })
+          .then(r => r.json())
+          .then(j => {
+            if (j && j.length>0) {
+              const lat = parseFloat(j[0].lat), lon = parseFloat(j[0].lon);
+              return { name: p, coord: [lat, lon], source: 'nominatim' };
+            } else {
+              return { name: p, coord: null, source: 'nominatim' };
+            }
+          })
+          .catch(err => ({ name: p, coord: null, source: 'error' }));
+      });
+
+      const resolved = await Promise.all(requests);
+
+      // merge into persistent cache
+      const latestCache = getGeoCache();
+      resolved.forEach(r => {
+        if (r.coord && r.name) {
+          latestCache[r.name.toLowerCase()] = r.coord;
+        }
+      });
+      setGeoCache(latestCache);
+
+      return resolved;
+    }
+
+    // Helper: get OSRM route (returns {geom, latlngs}) and caches by coordString
+    async function getRouteFromOSRM(coordsArray) {
+      // coordsArray: array of [lat, lon]
+      if (!coordsArray || coordsArray.length < 2) return null;
+      const coordString = coordsArray.map(c => `${c[1]},${c[0]}`).join(';');
+      const rc = getRouteCache();
+      if (rc[coordString]) {
+        const geom = rc[coordString];
+        // convert geom to latlngs
+        let latlngs = [];
+        if (geom.type === 'LineString') latlngs = geom.coordinates.map(c => [c[1], c[0]]);
+        else if (geom.type === 'MultiLineString') latlngs = geom.coordinates.flat().map(c => [c[1], c[0]]);
+        return { geom, latlngs };
+      }
+
+      const url = `https://router.project-osrm.org/route/v1/driving/${coordString}?overview=full&geometries=geojson&steps=false`;
+      try {
+        const resp = await fetch(url);
+        const json = await resp.json();
+        if (!json || !json.routes || json.routes.length === 0) return null;
+        const geom = json.routes[0].geometry;
+        const newRC = getRouteCache();
+        newRC[coordString] = geom;
+        setRouteCache(newRC);
+        let latlngs = [];
+        if (geom.type === 'LineString') latlngs = geom.coordinates.map(c => [c[1], c[0]]);
+        else if (geom.type === 'MultiLineString') latlngs = geom.coordinates.flat().map(c => [c[1], c[0]]);
+        return { geom, latlngs };
+      } catch (err) {
+        console.error('OSRM fetch error', err);
+        return null;
+      }
+    }
+
+    // -------------------------
+    // showRouteForPoints: optionally attach resulting routeCoordinates to a bus idx
+    // -------------------------
+    async function showRouteForPoints(placeNames, titleText = 'Route', subtitle = '', attachBusIdx = null) {
+      setBusy(true, 'Resolving places');
+      initMapIfNeeded();
+      document.getElementById('mapTitle').textContent = titleText || 'Route';
+      const resolvedArr = await resolvePlacesToCoords(placeNames);
+
+      const unresolved = resolvedArr.filter(r => !r.coord).map(r => r.name);
+      const coordsForRouting = resolvedArr.filter(r => r.coord).map(r => ({ name: r.name, coord: r.coord }));
+
+      if (unresolved.length > 0) {
+        alert('Could not find coordinates for: ' + unresolved.join(', ') + '. Map may be incomplete.');
+      }
+      if (coordsForRouting.length < 2) {
+        setBusy(false);
+        alert('Need at least two valid locations to build a route.');
+        return;
+      }
+
+      setBusy(true, 'Calculating route');
+      const coordsArray = coordsForRouting.map(c => c.coord);
+      const route = await getRouteFromOSRM(coordsArray);
+      if (!route) {
+        setBusy(false);
+        alert('Routing failed. OSRM did not return a route.');
+        return;
+      }
+
+      // render
+      renderRouteFromGeoJSON(route.geom, coordsForRouting, attachBusIdx);
+      setBusy(false);
+    }
+
+    function renderRouteFromGeoJSON(geom, namesWithCoords, attachBusIdx = null) {
+      if (!map) initMapIfNeeded();
+      if (routeLayer) { try { map.removeLayer(routeLayer); } catch(e){} routeLayer = null; }
+      markers.forEach(m => { try { map.removeLayer(m); } catch(e){} });
+      markers = [];
+
+      routeLayer = L.geoJSON(geom, { style: { color: '#1f6feb', weight: 5 } }).addTo(map);
+
+      namesWithCoords.forEach((p, i) => {
+        const label = (i===0 ? 'Start: ' : (i===namesWithCoords.length-1 ? 'End: ' : 'Via: ')) + (p.name || '');
+        const marker = L.marker(p.coord).addTo(map).bindPopup(label);
+        markers.push(marker);
+      });
+
+      // Extract route polyline coordinates (geom.coordinates: [ [lon,lat], ... ] or MultiLineString)
+      let polyCoords = [];
+      if (geom && geom.type === 'LineString' && Array.isArray(geom.coordinates)) {
+        polyCoords = geom.coordinates.map(c => [c[1], c[0]]); // to [lat,lon]
+      } else if (geom && geom.type === 'MultiLineString' && Array.isArray(geom.coordinates)) {
+        polyCoords = geom.coordinates.flat().map(c => [c[1], c[0]]);
+      }
+
+      // attach to bus if requested
+      if (attachBusIdx !== null && buses[attachBusIdx]) {
+        buses[attachBusIdx].routeCoordinates = polyCoords;
+      }
+
+      try {
+        map.fitBounds(routeLayer.getBounds(), { padding: [30,30] });
+      } catch(e) {
+        const group = new L.featureGroup(markers);
+        if (markers.length) map.fitBounds(group.getBounds(), { padding: [30,30] });
+      }
+
+      setTimeout(() => { try { map.invalidateSize(); } catch(e){} }, 80);
+    }
+
+    // -------------------------
+    // Nearest-bus logic (vertex fallback)
+    // -------------------------
+    function getDistance(lat1, lon1, lat2, lon2) {
+      const R = 6371e3; // meters
+      const φ1 = lat1 * Math.PI/180;
+      const φ2 = lat2 * Math.PI/180;
+      const Δφ = (lat2-lat1) * Math.PI/180;
+      const Δλ = (lon2-lon1) * Math.PI/180;
+
+      const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) +
+                Math.cos(φ1) * Math.cos(φ2) *
+                Math.sin(Δλ/2) * Math.sin(Δλ/2);
+
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+      return R * c; // meters
+    }
+
+    function minDistanceToPolyline(pointLatLon, polyPoints) {
+      if (!polyPoints || polyPoints.length === 0) return Infinity;
+      let minD = Infinity;
+      for (const p of polyPoints) {
+        const d = getDistance(pointLatLon[0], pointLatLon[1], p[0], p[1]);
+        if (d < minD) minD = d;
+      }
+      return minD;
+    }
+
+    async function findNearestBuses(locationName) {
+      const nearListEl = document.getElementById('nearList');
+      const resultEl = document.getElementById('result');
+      if (resultEl) resultEl.innerHTML = '';
+      if (nearListEl) nearListEl.innerHTML = '';
+
+      const resolved = await resolvePlacesToCoords([locationName]);
+      if (!resolved || resolved.length===0 || !resolved[0].coord) {
+        alert('Could not find the location you entered.');
+        return;
+      }
+      const userCoord = resolved[0].coord; // [lat, lon]
+
+      const results = [];
+
+      for (let i = 0; i < buses.length; i++) {
+        const bus = buses[i];
+        let routePts = bus.routeCoordinates;
+
+        if (!routePts || routePts.length === 0) {
+          const names = [bus.from];
+          if (bus.cur && bus.cur.toLowerCase() !== bus.from.toLowerCase() && bus.cur.toLowerCase() !== bus.to.toLowerCase()) names.push(bus.cur);
+          if (!names.includes(bus.to)) names.push(bus.to);
+          const resolvedPts = await resolvePlacesToCoords(names);
+          routePts = resolvedPts.filter(r => r.coord).map(r => r.coord);
+          if (routePts.length >= 1) bus.routeCoordinates = routePts.slice();
+        }
+
+        const distance = minDistanceToPolyline(userCoord, routePts || []);
+        results.push({ idx: i, distance, bus });
+      }
+
+      results.sort((a,b) => a.distance - b.distance);
+
+      if (!nearListEl) return;
+      if (results.length === 0) {
+        nearListEl.innerHTML = `<div class="list-item">No buses available.</div>`;
+        return;
+      }
+
+      const header = document.createElement('div');
+      header.innerHTML = `<div style="font-weight:700; margin-bottom:8px">Nearest buses to "${escapeHtml(locationName)}" (sorted)</div>`;
+      nearListEl.appendChild(header);
+
+      results.forEach(item => {
+        const km = (item.distance/1000).toFixed(2);
+        const div = document.createElement('div');
+        div.className = 'near-item';
+        div.innerHTML = `
+          <div>
+            <div style="font-weight:700">${escapeHtml(item.bus.name)}</div>
+            <div class="muted-xs">Route: ${escapeHtml(item.bus.from)} → ${escapeHtml(item.bus.to)} · Distance: ${km} km</div>
+          </div>
+          <div style="display:flex; gap:8px;">
+            <button class="btn btn-primary view-btn" data-idx="${item.idx}">View</button>
+            <button class="btn btn-green pickup-btn" data-idx="${item.idx}">Request Pickup</button>
+          </div>
+        `;
+        nearListEl.appendChild(div);
+      });
+
+      // attach handlers
+      nearListEl.querySelectorAll('.view-btn').forEach(btn => {
+        btn.onclick = async (e) => {
+          const idx = Number(e.currentTarget.getAttribute('data-idx'));
+          const b = buses[idx];
+          const pts = [b.from];
+          if (b.cur && b.cur.toLowerCase() !== b.from.toLowerCase() && b.cur.toLowerCase() !== b.to.toLowerCase()) pts.push(b.cur);
+          if (!pts.includes(b.to)) pts.push(b.to);
+          await showRouteForPoints(pts, `Bus: ${b.name}`, `${b.from} → ${b.cur} → ${b.to}`, idx);
+        };
+      });
+
+      nearListEl.querySelectorAll('.pickup-btn').forEach(btn => {
+        btn.onclick = async (e) => {
+          const idx = Number(e.currentTarget.getAttribute('data-idx'));
+          const b = buses[idx];
+          const requested = locationName;
+          b.cur = requested;
+          alert(`${b.name} pickup requested at ${requested}.`);
+          const pts = [b.from, requested, b.to];
+          await showRouteForPoints(pts, `Pickup: ${requested}`, `${b.from} → ${requested} → ${b.to}`, idx);
+          refreshBusList();
+        };
+      });
+    }
+
+    // --------------------------------------------------
+    // Accurate route-based nearest bus algorithm
+    // --------------------------------------------------
+    // Haversine distance (meters) between two lat/lng pairs
+    function haversineMeters(aLat, aLng, bLat, bLng) {
+      const R = 6371000;
+      const φ1 = aLat * Math.PI/180;
+      const φ2 = bLat * Math.PI/180;
+      const Δφ = (bLat - aLat) * Math.PI/180;
+      const Δλ = (bLng - aLng) * Math.PI/180;
+      const s = Math.sin(Δφ/2)*Math.sin(Δφ/2) + Math.cos(φ1)*Math.cos(φ2)*Math.sin(Δλ/2)*Math.sin(Δλ/2);
+      return 2 * R * Math.asin(Math.sqrt(s));
+    }
+
+    // Convert lat/lng to 3D cartesian unit vector for spherical segment projection
+    function latLngToUnitVector(lat, lng) {
+      const radLat = lat * Math.PI/180;
+      const radLng = lng * Math.PI/180;
+      return {
+        x: Math.cos(radLat) * Math.cos(radLng),
+        y: Math.cos(radLat) * Math.sin(radLng),
+        z: Math.sin(radLat)
+      };
+    }
+
+    // shortest distance from point P to segment AB on sphere (meters)
+    function pointToSegmentDistanceMeters(P, A, B) {
+      // P, A, B are objects {lat, lng}
+      // Convert to unit vectors
+      const Pv = latLngToUnitVector(P.lat, P.lng);
+      const Av = latLngToUnitVector(A.lat, A.lng);
+      const Bv = latLngToUnitVector(B.lat, B.lng);
+
+      const AB = { x: Bv.x - Av.x, y: Bv.y - Av.y, z: Bv.z - Av.z };
+      const AP = { x: Pv.x - Av.x, y: Pv.y - Av.y, z: Pv.z - Av.z };
+      const AB_len2 = AB.x*AB.x + AB.y*AB.y + AB.z*AB.z;
+      if (AB_len2 === 0) return haversineMeters(P.lat, P.lng, A.lat, A.lng);
+      let t = (AP.x*AB.x + AP.y*AB.y + AP.z*AB.z) / AB_len2;
+      t = Math.max(0, Math.min(1, t));
+      const proj = { x: Av.x + AB.x * t, y: Av.y + AB.y * t, z: Av.z + AB.z * t };
+      // convert proj back to lat/lng
+      const hyp = Math.sqrt(proj.x*proj.x + proj.y*proj.y);
+      const plat = Math.atan2(proj.z, hyp) * 180/Math.PI;
+      const plng = Math.atan2(proj.y, proj.x) * 180/Math.PI;
+
+      return haversineMeters(P.lat, P.lng, plat, plng);
+    }
+
+    // Main: find nearest bus by computing point-to-segment distances along route polyline
+    async function findNearestBusByRoute(userLocationText) {
+      const [pickup] = await resolvePlacesToCoords([userLocationText]);
+      if (!pickup || !pickup.coord) return null;
+      const userPoint = { lat: pickup.coord[0], lng: pickup.coord[1] };
+
+      let bestBus = null;
+      let bestDistance = Infinity;
+
+      for (let i=0; i<buses.length; i++) {
+        const bus = buses[i];
+        // ensure routeCoordinates exist (full OSRM polyline). If missing, try to fetch/calc it
+        if (!bus.routeCoordinates || bus.routeCoordinates.length < 2) {
+          // Attempt to get OSRM polyline for from -> cur? -> to
+          const pts = [bus.from];
+          if (bus.cur && bus.cur.toLowerCase() !== bus.from.toLowerCase() && bus.cur.toLowerCase() !== bus.to.toLowerCase()) pts.push(bus.cur);
+          if (!pts.includes(bus.to)) pts.push(bus.to);
+          const resolved = await resolvePlacesToCoords(pts);
+          const coordsArray = resolved.filter(r => r.coord).map(r => r.coord);
+          const route = await getRouteFromOSRM(coordsArray);
+          if (route && route.latlngs && route.latlngs.length>0) {
+            bus.routeCoordinates = route.latlngs.slice();
+          } else {
+            // fallback: use resolved points themselves
+            bus.routeCoordinates = coordsArray.slice();
+          }
+        }
+
+        const poly = bus.routeCoordinates;
+        if (!poly || poly.length === 0) continue;
+
+        // compute min distance to each segment
+        let minD = Infinity;
+        for (let j=0; j<poly.length-1; j++) {
+          const A = { lat: poly[j][0], lng: poly[j][1] };
+          const B = { lat: poly[j+1][0], lng: poly[j+1][1] };
+          const d = pointToSegmentDistanceMeters(userPoint, A, B);
+          if (d < minD) minD = d;
+        }
+
+        if (minD < bestDistance) {
+          bestDistance = minD;
+          bestBus = bus;
+        }
+      }
+
+      return { bus: bestBus, distance: bestDistance };
+    }
+
+    // -------------------------
+    // passengerFindBus: uses route-based nearest algorithm
+    // -------------------------
+    async function passengerFindBus() {
+      const loc = (document.getElementById('pickup').value || '').trim();
+      const res = document.getElementById('result');
+      res.innerHTML = '';
+      if (!loc) {
+        res.innerHTML = `<div class="list-item error">Please enter a pickup location.</div>`;
+        return;
+      }
+
+      // exact match (fast path)
+      let matched = buses.find(b => b.from.toLowerCase() === loc.toLowerCase() || (b.cur && b.cur.toLowerCase() === loc.toLowerCase()));
+      if (matched) {
+        res.innerHTML = `<div class="list-item">
+            <h3 style="margin:0">Bus Found</h3>
+            <div style="font-weight:700">${escapeHtml(matched.name)}</div>
+            <div class="small">Route: ${escapeHtml(matched.from)} → ${escapeHtml(matched.to)}</div>
+            <div class="small">Current: ${escapeHtml(matched.cur)}</div>
+          </div>`;
+        const pts = [matched.from];
+        if (matched.cur && matched.cur.toLowerCase() !== matched.from.toLowerCase() && matched.cur.toLowerCase() !== matched.to.toLowerCase()) pts.push(matched.cur);
+        if (!pts.includes(matched.to)) pts.push(matched.to);
+        await showRouteForPoints(pts, `Bus: ${matched.name}`, `${matched.from} → ${matched.cur} → ${matched.to}`);
+        return;
+      }
+
+      // otherwise find nearest by route
+      const nearest = await findNearestBusByRoute(loc);
+      if (!nearest || !nearest.bus) {
+        res.innerHTML = `<div class="list-item error">No buses found.</div>`;
+        return;
+      }
+
+      const bus = nearest.bus;
+      res.innerHTML = `
+        <div class="list-item">
+          <h3 style="margin:0">Nearest Bus Found</h3>
+          <div style="font-weight:700">${escapeHtml(bus.name)}</div>
+          <div class="small">Route: ${escapeHtml(bus.from)} → ${escapeHtml(bus.to)}</div>
+          <div class="small">Current: ${escapeHtml(bus.cur)}</div>
+          <div class="small" style="margin-top:8px;">Distance to route: ${(nearest.distance/1000).toFixed(3)} km</div>
+          <button id="confirmPickup" class="btn btn-green" style="margin-top:10px;">Confirm Pickup</button>
+        </div>
+      `;
+
+      document.getElementById('confirmPickup').onclick = async () => {
+        bus.cur = loc;
+        const pts = [bus.from];
+        if (bus.cur.toLowerCase() !== bus.from.toLowerCase() && bus.cur.toLowerCase() !== bus.to.toLowerCase()) pts.push(bus.cur);
+        pts.push(bus.to);
+        await showRouteForPoints(pts, `Pickup for ${bus.name}`, `${bus.from} → ${bus.cur} → ${bus.to}`);
+        refreshBusList();
+      };
+    }
+
+    // -------------------------
+    // Utilities & startup
+    // -------------------------
+    function escapeHtml(s) {
+      return (s+'').replace(/[&<>"'`=\/]/g, function(c){ return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;","/":"&#x2F;","`":"&#96;","=":"&#61;"})[c]; });
+    }
+
+    document.getElementById('homeBtn').onclick = () => {
+      const mapCard = document.getElementById('mapCard');
+      if (mapCard) mapCard.style.display = 'none';
+      loadLogin();
+    };
+
+    // Start
+    loadLogin();
+    window.refreshBusList = refreshBusList;
+
+    document.addEventListener('keydown', function(e){
+      const el = document.activeElement;
+      if (e.key === 'Enter' && el && el.id === 'pickup') {
+        const btn = document.getElementById('findBtn');
+        if (btn) { btn.click(); e.preventDefault(); }
+      }
+      if (e.key === 'Enter' && (el && (el.id === 'busName' || el.id === 'fromLoc' || el.id === 'toLoc' || el.id === 'currentLoc'))){
+        const btn = document.getElementById('addBusBtn');
+        if (btn) { btn.click(); e.preventDefault(); }
+      }
+    });
+    // Generate floating background circles
+function generateCircles() {
+  const bg = document.getElementById("floatingBg");
+
+  for (let i = 0; i < 22; i++) {
+    let circle = document.createElement("div");
+    let size = Math.random() * 120 + 40; // 40px to 160px
+
+    circle.classList.add("circle");
+    circle.style.width = size + "px";
+    circle.style.height = size + "px";
+    circle.style.left = Math.random() * 100 + "vw";
+    circle.style.animationDuration = (Math.random() * 10 + 10) + "s"; 
+    circle.style.animationDelay = Math.random() * 5 + "s";
+
+    bg.appendChild(circle);
+  }
 }
 
-// Overlay click to hide and enable buttons
-overlay.addEventListener("click", () => {
-    overlay.classList.add("hidden");
-    yesBtn.classList.remove("disabled");
-    noBtn.classList.remove("disabled");
-    yesBtn.focus();
-});
+generateCircles();
 
-// YES button click
-yesBtn.onclick = () => {
-    if (yesBtn.classList.contains("disabled")) return;
-    if (yesCount < 100) {
-        yesCount++;
-        counter.innerText = "YES Count: " + yesCount;
-        yesBtn.setAttribute("aria-pressed", "true");
-    }
-    if (yesCount === 100) {
-        alert("You are free now!");
-        window.onbeforeunload = null;
-        overlay.style.display = "none";
-        yesBtn.disabled = true;
-        noBtn.disabled = true;
-    }
-};
 
-// NO button movement
-function moveNoButton() {
-    if (noBtn.classList.contains("disabled")) return;
-    const btnWidth = noBtn.offsetWidth;
-    const btnHeight = noBtn.offsetHeight;
-    const maxX = window.innerWidth - btnWidth;
-    const maxY = window.innerHeight - btnHeight;
-
-    let newX = Math.random() * maxX;
-    let newY = Math.random() * maxY;
-
-    noBtn.style.left = newX + "px";
-    noBtn.style.top = newY + "px";
-}
-
-noBtn.onmouseover = moveNoButton;
-noBtn.ontouchstart = moveNoButton; // For touch devices
-
-noBtn.onclick = (e) => {
-    if (noBtn.classList.contains("disabled")) return;
-
-    noCount++;
-
-    for (let i = 0; i < 8; i++) {
-        let particle = document.createElement("div");
-        particle.className = "explode";
-        particle.style.left = (e.clientX - 4) + "px";
-        particle.style.top = (e.clientY - 4) + "px";
-        document.body.appendChild(particle);
-        setTimeout(() => particle.remove(), 600);
-    }
-
-    if (noCount === 50) {
-        scarePopup.style.display = "flex";
-        setTimeout(() => {
-            scarePopup.style.display = "none";
-        }, 2000);
-    }
-};
-
-window.onbeforeunload = function () {
-    if (yesCount < 100) {
-        return "You cannot exit until YES = 100.";
-    }
-};
-
-document.addEventListener("contextmenu", e => e.preventDefault());
-document.addEventListener("keydown", e => {
-    if (["Escape", "F5", "F11", "F12"].includes(e.key)) e.preventDefault();
-});
-</script>
-
+  </script>
 </body>
 </html>
